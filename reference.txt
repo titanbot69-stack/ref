@@ -1,40 +1,40 @@
-<div class="row" style="height: 65vh;">
-  <!-- Left Section: 25% -->
-  <div class="col-md-3 d-flex flex-column justify-content-between" style="background-color: #f8f9fa; border-right: 1px solid #ddd; padding: 10px;">
-    <button class="btn btn-outline-primary active" style="width: 100%; height: calc(60vh / 6 - 10px); border-radius: 10px; margin-bottom: 10px;">
-      <img src="/static/images/rpulse.png" alt="RPulse" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
-    </button>
-    <button class="btn btn-outline-primary" style="width: 100%; height: calc(60vh / 6 - 10px); border-radius: 10px; margin-bottom: 10px;">
-      <img src="/static/images/dre.png" alt="DRE" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
-    </button>
-    <button class="btn btn-outline-primary" style="width: 100%; height: calc(60vh / 6 - 10px); border-radius: 10px; margin-bottom: 10px;">
-      <img src="/static/images/ingenious.png" alt="Ingenious" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
-    </button>
-    <button class="btn btn-outline-primary" style="width: 100%; height: calc(60vh / 6 - 10px); border-radius: 10px; margin-bottom: 10px;">
-      <img src="/static/images/exponentia.png" alt="Exponentia" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
-    </button>
-    <button class="btn btn-outline-primary" style="width: 100%; height: calc(60vh / 6 - 10px); border-radius: 10px; margin-bottom: 10px;">
-      <img src="/static/images/neo.png" alt="Neo" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
-    </button>
-    <button class="btn btn-outline-primary" style="width: 100%; height: calc(60vh / 6 - 10px); border-radius: 10px; margin-bottom: 10px;">
-      <img src="/static/images/dlp.png" alt="DLP" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
-    </button>
-  </div>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const buttons = document.querySelectorAll(".btn-outline-primary");
+    const tableBody = document.getElementById("application-access-table-body");
 
-  <!-- Right Section: 75% -->
-  <div class="col-md-9" style="padding: 20px;">
-    <table class="table table-striped" style="border: 1px solid #ddd;">
-      <thead style="background-color: #ff125f; color: white;">
-        <tr>
-          <th>Employee Code</th>
-          <th>Name</th>
-          <th>Email</th>
-        </tr>
-      </thead>
-      <tbody id="application-access-table-body">
-        <!-- Dynamic rows will be populated here -->
-      </tbody>
-    </table>
-  </div>
-</div>
+    // Default selection for RPulse
+    const defaultButton = document.querySelector(".btn-outline-primary img[alt='RPulse']").closest(".btn-outline-primary");
+    defaultButton.classList.add("active");
+    fetchData("rpulse");
 
+    buttons.forEach(button => {
+      button.addEventListener("click", function() {
+        buttons.forEach(btn => btn.classList.remove("active"));
+        this.classList.add("active");
+
+        const appName = this.querySelector("img").alt.toLowerCase();
+        fetchData(appName);
+      });
+    });
+
+    function fetchData(appName) {
+      fetch(`/get-application-data?app=${appName}`)
+        .then(response => response.json())
+        .then(data => {
+          tableBody.innerHTML = "";
+          const employees = Array.isArray(data) ? data : data.data || [];
+          employees.forEach(employee => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${employee.emp_code}</td>
+              <td>${employee.first_name} ${employee.last_name}</td>
+              <td>${employee.business_email}</td>
+            `;
+            tableBody.appendChild(row);
+          });
+        })
+        .catch(error => console.error("Error fetching application data:", error));
+    }
+  });
+</script>
