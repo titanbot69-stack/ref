@@ -1,33 +1,29 @@
+<style>
+  .btn-image {
+    display: inline-block;
+    border: none;
+    padding: 0;
+    background-color: transparent;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
 
+  .btn-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
 
+  .btn-image:hover img {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
+  }
 
-@login_required
-@require_GET
-def get_application_data(request):
-    app_name = request.GET.get('app')
-    print(app_name)
-    if not app_name:
-        logger.error("Application name is missing in the request.")
-        return JsonResponse({'error': 'Application name is required'}, status=400)
-
-    app_mapping = {
-        'rpulse': RPULSE,
-        'dre': DRE,
-        'ingenious': INGENIOUS,
-        'exponentia': EXPONENTIA,
-        'neo': NEO,
-        'dlp': DLP,
-    }
-
-    user_emails = app_mapping.get(app_name.lower())
-    if user_emails is None:
-        logger.error(f"Invalid application name: {app_name}")
-        return JsonResponse({'error': 'Invalid application name'}, status=400)
-
-    all_rows = get_hrms_list()
-    filtered_rows = [
-        row for row in all_rows if row['business_email'] in user_emails
-    ]
-    print(filtered_rows)
-    logger.info(f"Filtered rows for application {app_name}: {filtered_rows}")
-    return JsonResponse({'data': filtered_rows}, safe=False)
+  .btn-image:active img {
+    transform: translateY(0);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+</style>
