@@ -1,0 +1,40 @@
+<div class="row" style="height: 65vh;">
+  <!-- Left Section: 25% -->
+  <div class="col-md-3 d-flex flex-column justify-content-between" style="background-color: #f8f9fa; border-right: 1px solid #ddd; padding: 10px;">
+    <button class="btn btn-outline-primary active" style="width: 100%; height: calc(60vh / 6 - 10px); border-radius: 10px; margin-bottom: 10px;">
+      <img src="/static/images/rpulse.png" alt="RPulse" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
+    </button>
+    <button class="btn btn-outline-primary" style="width: 100%; height: calc(60vh / 6 - 10px); border-radius: 10px; margin-bottom: 10px;">
+      <img src="/static/images/dre.png" alt="DRE" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
+    </button>
+    <button class="btn btn-outline-primary" style="width: 100%; height: calc(60vh / 6 - 10px); border-radius: 10px; margin-bottom: 10px;">
+      <img src="/static/images/ingenious.png" alt="Ingenious" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
+    </button>
+    <button class="btn btn-outline-primary" style="width: 100%; height: calc(60vh / 6 - 10px); border-radius: 10px; margin-bottom: 10px;">
+      <img src="/static/images/exponentia.png" alt="Exponentia" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
+    </button>
+    <button class="btn btn-outline-primary" style="width: 100%; height: calc(60vh / 6 - 10px); border-radius: 10px; margin-bottom: 10px;">
+      <img src="/static/images/neo.png" alt="Neo" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
+    </button>
+    <button class="btn btn-outline-primary" style="width: 100%; height: calc(60vh / 6 - 10px); border-radius: 10px; margin-bottom: 10px;">
+      <img src="/static/images/dlp.png" alt="DLP" class="img-fluid" style="width: 100%; height: 100%; object-fit: cover;">
+    </button>
+  </div>
+
+  <!-- Right Section: 75% -->
+  <div class="col-md-9" style="padding: 20px;">
+    <table class="table table-striped" style="border: 1px solid #ddd;">
+      <thead style="background-color: #ff125f; color: white;">
+        <tr>
+          <th>Employee Code</th>
+          <th>Name</th>
+          <th>Email</th>
+        </tr>
+      </thead>
+      <tbody id="application-access-table-body">
+        <!-- Dynamic rows will be populated here -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
