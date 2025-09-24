@@ -1,131 +1,24 @@
+        <!-- Updated search box for RA Employee Details -->
         <div class="modern-search-box">
           <i class="fas fa-search"></i>
-          <input type="text" data-table-id="employee-details-table-container" placeholder="Search Employee Details...">
+          <input type="text" data-table-id="ra-emp" placeholder="Search Employee Details...">
         </div>
 
 
-
+        <!-- Updated search box for RA User Access -->
         <div class="modern-search-box">
           <i class="fas fa-search"></i>
-          <input type="text" data-table-id="user-access-table-container" placeholder="Search User Access...">
+          <input type="text" data-table-id="ra-user-access-table-container" placeholder="Search User Access...">
         </div>
 
-
+        <!-- Updated search box for Revoke Access -->
         <div class="modern-search-box">
           <i class="fas fa-search"></i>
-          <input type="text" data-table-id="application-access-table-container" placeholder="Search Application Access...">
+          <input type="text" data-table-id="revoke" placeholder="Search Revoke Access...">
         </div>
 
-
+        <!-- Updated search box for Recertification -->
+        <div class="modern-search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" data-table-id="recertify" placeholder="Search Recertification...">
         </div>
-      </div>
-
-        <input type="text" class="form-control mb-3" placeholder="Search Employee Details..." oninput="filterTable('ra-emp', this.value)">
-
-
-          <table class="table table-sm table-striped" id="ra-emp">
-
-
-        <input type="text" class="form-control mb-3" placeholder="Search User Access..." oninput="filterTable('ra-user-access-table-container', this.value)">
-
-
-        <input type="text" class="form-control mb-3" placeholder="Search Revoke Access..." oninput="filterTable('revoke', this.value)">
-        <div class="mh-50vh">
-         <table class="table table-sm table-striped align-middle" id="revoke">
-            <thead><tr><th>Emp Code</th><th>Name</th><th>Email</th><th>Action</th></tr></thead>
-            <tbody>
-            {% for h in active_rows %}
-              <tr>
-                <td>{{ h.emp_code }}</td>
-                <td>{{ h.first_name }} {{ h.last_name }}</td>
-                <td>{{ h.business_email }}</td>
-                <td><button class="btn btn-sm btn-outline-danger" style="border-color:#ff512f;color:#ff512f" data-bs-toggle="modal" data-bs-target="#revokeModal" data-emp="{{ h.emp_code }}" data-email="{{ h.business_email }}">Revoke</button></td>
-              </tr>
-            {% empty %}
-              <tr><td colspan="4" class="text-center">No active employees</td></tr>
-            {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-
-        <input type="text" class="form-control mb-3" placeholder="Search Recertification..." oninput="filterTable('recertify', this.value)">
-        <div class="mh-50vh">
-          <table class="table table-sm table-striped" id="recertify">
-            <thead><tr><th>Emp Code</th><th>Name</th><th>Entity</th><th>Status</th><th>Email</th><th>Action</th></tr></thead>
-            <tbody>
-            {% for h in recertify_rows %}
-              <tr>
-                <td>{{ h.emp_code }}</td>
-                <td>{{ h.first_name }} {{ h.last_name }}</td>
-                <td>{{ h.entity_name }}</td>
-                <td>
-                  {% if h.employee_status == 'A' %}
-                    <span class="chip chip-active">Active</span>
-                  {% else %}
-                    <span class="chip chip-inactive">Inactive</span>
-                  {% endif %}
-                </td>
-                <td>{{ h.business_email }}</td>
-                <td><button class="btn btn-sm btn-outline-primary" style="border-color:#ff512f;color:#ff512f">Recertify</button></td>
-              </tr>
-            {% empty %}
-              <tr><td colspan="6" class="text-center">No recertification required</td></tr>
-            {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const searchInputs = document.querySelectorAll('.modern-search-box input');
-
-    searchInputs.forEach(input => {
-      input.addEventListener('input', function() {
-        const tableId = this.getAttribute('data-table-id');
-        const filter = this.value.toLowerCase();
-        const table = document.getElementById(tableId);
-        const rows = table.querySelectorAll('tbody tr');
-
-        rows.forEach(row => {
-          const cells = row.querySelectorAll('td');
-          const match = Array.from(cells).some(cell => cell.textContent.toLowerCase().includes(filter));
-          row.style.display = match ? '' : 'none';
-        });
-      });
-    });
-  });
-</script>
-
-<style>
-  .modern-search-box {
-    position: relative;
-    margin-bottom: 20px;
-  }
-
-  .modern-search-box input {
-    width: 100%;
-    padding: 10px 40px;
-    border: 1px solid #ddd;
-    border-radius: 25px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    font-size: 16px;
-    transition: all 0.3s ease;
-  }
-
-  .modern-search-box input:focus {
-    border-color: #ff512f;
-    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
-    outline: none;
-  }
-
-  .modern-search-box i {
-    position: absolute;
-    top: 50%;
-    left: 15px;
-    transform: translateY(-50%);
-    font-size: 20px;
-    color: #aaa;
-  }
-</style>
