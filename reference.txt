@@ -1,73 +1,22 @@
-<button class="btn-image active" style="width: 100%; height: calc(60vh / 6 - 10px);">
-      <img src="/static/images/rpulse.png" alt="RPulse" class="img-fluid">
-    </button>
-    <button class="btn-image" style="width: 100%; height: calc(60vh / 6 - 10px);">
-      <img src="/static/images/dre.png" alt="DRE" class="img-fluid">
-    </button>
-    <button class="btn-image" style="width: 100%; height: calc(60vh / 6 - 10px);">
-      <img src="/static/images/ingenious.png" alt="Ingenious" class="img-fluid">
-    </button>
-    <button class="btn-image" style="width: 100%; height: calc(60vh / 6 - 10px);">
-      <img src="/static/images/exponentia.png" alt="Exponentia" class="img-fluid">
-    </button>
-    <button class="btn-image" style="width: 100%; height: calc(60vh / 6 - 10px);">
-      <img src="/static/images/neo.png" alt="Neo" class="img-fluid">
-    </button>
-    <button class="btn-image" style="width: 100%; height: calc(60vh / 6 - 10px);">
-      <img src="/static/images/dlp.png" alt="DLP" class="img-fluid">
+  .btn-image.active img {
+    transform: scale(1.05); /* Reduced zoom effect */
+    box-shadow: 0 5px 8px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
 
+  .btn-image:not(.active) img {
+    transform: scale(0.95); /* Adjusted scale for inactive buttons */
+    opacity: 0.8;
+  }
 
+<script>
   document.addEventListener('DOMContentLoaded', function() {
     const buttons = document.querySelectorAll('.btn-image');
-    const tableBody = document.getElementById('application-access-table-body');
-
-    // Default selection for RPulse
-    const defaultButton = document.querySelector('.btn-image img[alt="RPulse"]').closest('.btn-image');
-    defaultButton.classList.add('active');
-    const defaultAppName = defaultButton.querySelector('img').alt.toLowerCase();
-
-    // Fetch data for the default application
-    fetch(`/get-application-data?app=${defaultAppName}`)
-      .then(response => response.json())
-      .then(data => {
-        tableBody.innerHTML = '';
-        const employees = data.data || [];
-        employees.forEach(employee => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${employee.emp_code}</td>
-            <td>${employee.first_name} ${employee.last_name}</td>
-            <td>${employee.business_email}</td>
-          `;
-          tableBody.appendChild(row);
-        });
-      })
-      .catch(error => console.error('Error fetching application data:', error));
 
     buttons.forEach(button => {
       button.addEventListener('click', function() {
         buttons.forEach(btn => btn.classList.remove('active'));
         this.classList.add('active');
-
-        const appName = this.querySelector('img').alt.toLowerCase();
-
-        // Fetch data for the selected application
-        fetch(`/get-application-data?app=${appName}`)
-          .then(response => response.json())
-          .then(data => {
-            tableBody.innerHTML = '';
-            const employees = data.data || [];
-            employees.forEach(employee => {
-              const row = document.createElement('tr');
-              row.innerHTML = `
-                <td>${employee.emp_code}</td>
-                <td>${employee.first_name} ${employee.last_name}</td>
-                <td>${employee.business_email}</td>
-              `;
-              tableBody.appendChild(row);
-            });
-          })
-          .catch(error => console.error('Error fetching application data:', error));
       });
     });
   });
+</script>
