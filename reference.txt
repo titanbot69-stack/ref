@@ -3,38 +3,26 @@
     const buttons = document.querySelectorAll(".btn-outline-primary");
     const tableBody = document.getElementById("application-access-table-body");
 
-    // Default selection for RPulse
-    const defaultButton = document.querySelector(".btn-outline-primary img[alt='RPulse']").closest(".btn-outline-primary");
-    defaultButton.classList.add("active");
-    fetchData("rpulse");
-
     buttons.forEach(button => {
       button.addEventListener("click", function() {
-        buttons.forEach(btn => btn.classList.remove("active"));
-        this.classList.add("active");
-
         const appName = this.querySelector("img").alt.toLowerCase();
-        fetchData(appName);
+
+        fetch(`/get-application-data?app=${appName}`)
+          .then(response => response.json())
+          .then(data => {
+            tableBody.innerHTML = "";
+            data.forEach(employee => {
+              const row = document.createElement("tr");
+              row.innerHTML = `
+                <td>${employee.emp_code}</td>
+                <td>${employee.first_name} ${employee.last_name}</td>
+                <td>${employee.business_email}</td>
+              `;
+              tableBody.appendChild(row);
+            });
+          })
+          .catch(error => console.error("Error fetching application data:", error));
       });
     });
-
-    function fetchData(appName) {
-      fetch(`/get-application-data?app=${appName}`)
-        .then(response => response.json())
-        .then(data => {
-          tableBody.innerHTML = "";
-          const employees = Array.isArray(data) ? data : data.data || [];
-          employees.forEach(employee => {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-              <td>${employee.emp_code}</td>
-              <td>${employee.first_name} ${employee.last_name}</td>
-              <td>${employee.business_email}</td>
-            `;
-            tableBody.appendChild(row);
-          });
-        })
-        .catch(error => console.error("Error fetching application data:", error));
-    }
   });
 </script>
