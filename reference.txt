@@ -1,24 +1,15 @@
-        <!-- Updated search box for RA Employee Details -->
-        <div class="modern-search-box">
-          <i class="fas fa-search"></i>
-          <input type="text" data-table-id="ra-emp" placeholder="Search Employee Details...">
-        </div>
+DUMMY_EVENTS = []
 
-
-        <!-- Updated search box for RA User Access -->
-        <div class="modern-search-box">
-          <i class="fas fa-search"></i>
-          <input type="text" data-table-id="ra-user-access-table-container" placeholder="Search User Access...">
-        </div>
-
-        <!-- Updated search box for Revoke Access -->
-        <div class="modern-search-box">
-          <i class="fas fa-search"></i>
-          <input type="text" data-table-id="revoke" placeholder="Search Revoke Access...">
-        </div>
-
-        <!-- Updated search box for Recertification -->
-        <div class="modern-search-box">
-          <i class="fas fa-search"></i>
-          <input type="text" data-table-id="recertify" placeholder="Search Recertification...">
-        </div>
+    DUMMY_EVENTS.append({
+        'event_id': event_id,
+        'event_type': event_type,
+        'triggered_by': triggered_by,
+        'triggered_at': triggered_at.strftime('%Y-%m-%d %H:%M:%S'),
+        'event_description': event_description,
+        'status': status,
+        'severity_level': severity_level,
+        'user_role': user_role,
+        'assigned_to': assigned_to,
+        'assigned_at': assigned_at.strftime('%Y-%m-%d %H:%M:%S'),
+        'eve_status': eve_status,
+    })
