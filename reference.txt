@@ -1,15 +1,42 @@
-DUMMY_EVENTS = []
+<div class="access-requests">
+    <table class="table table-striped table-responsive">
+        <thead>
+            <tr>
+                <th>Event ID</th>
+                <th>Event Type</th>
+                <th>Triggered By</th>
+                <th>Severity Level</th>
+                <th>Event Description</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for event in events %}
+            <tr>
+                <td>{{ event.event_id }}</td>
+                <td>{{ event.event_type }}</td>
+                <td>{{ event.triggered_by }}</td>
+                <td>{{ event.severity_level }}</td>
+                <td>{{ event.event_description }}</td>
+                <td>
+                    <button class="btn btn-success btn-sm">Accept</button>
+                    <button class="btn btn-danger btn-sm">Reject</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
-    DUMMY_EVENTS.append({
-        'event_id': event_id,
-        'event_type': event_type,
-        'triggered_by': triggered_by,
-        'triggered_at': triggered_at.strftime('%Y-%m-%d %H:%M:%S'),
-        'event_description': event_description,
-        'status': status,
-        'severity_level': severity_level,
-        'user_role': user_role,
-        'assigned_to': assigned_to,
-        'assigned_at': assigned_at.strftime('%Y-%m-%d %H:%M:%S'),
-        'eve_status': eve_status,
-    })
+<style>
+    .access-requests {
+        margin: 20px;
+    }
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .btn {
+        margin: 0 5px;
+    }
+</style>
