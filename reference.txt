@@ -1,9 +1,27 @@
-<td class="event-description">
-                    <span class="short-description">{{ event.event_description|truncatechars:50 }}</span>
-                    <span class="full-description" style="display: none;">{{ event.event_description }}</span>
+<div class="access-requests">
+    <div class="request-list">
+        {% for event in events %}
+        <div class="request-item">
+            <div class="request-header">
+                <h4 class="event-id">{{ event.event_id }} - {{ event.event_type }}</h4>
+                <p class="severity-level">Severity: {{ event.severity_level }}</p>
+            </div>
+            <div class="request-body">
+                <p class="triggered-by">Triggered By: {{ event.triggered_by }}</p>
+                <div class="event-description">
+                    <div class="description-content short-description">{{ event.event_description|truncatechars:150 }}</div>
+                    <div class="description-content full-description" style="display: none; overflow-y: auto; max-height: 150px;">{{ event.event_description }}</div>
                     <a href="#" class="toggle-description">Read More</a>
-                </td>
-
+                </div>
+            </div>
+            <div class="request-actions">
+                <button class="btn btn-success">Accept</button>
+                <button class="btn btn-danger">Reject</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -29,3 +47,69 @@
         });
     });
 </script>
+
+<style>
+    .access-requests {
+        margin: 20px;
+        font-family: Arial, sans-serif;
+    }
+    .request-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    .request-item {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        background-color: #fff;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .request-header {
+        margin-bottom: 10px;
+    }
+    .event-id {
+        font-size: 16px;
+        font-weight: bold;
+        color: #333;
+    }
+    .severity-level {
+        font-size: 14px;
+        color: #777;
+    }
+    .request-body {
+        margin-bottom: 10px;
+        color: #555;
+    }
+    .event-description {
+        position: relative;
+    }
+    .description-content {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    .triggered-by {
+        font-size: 13px;
+        color: #777;
+    }
+    .request-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    .btn {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    .btn-success {
+        background-color: #28a745;
+        color: #fff;
+    }
+    .btn-danger {
+        background-color: #dc3545;
+        color: #fff;
+    }
+</style>
