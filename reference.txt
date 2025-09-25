@@ -1,7 +1,7 @@
-<div class="access-requests">
+<div class="access-requests" id="access-requests-table-container">
     <div class="request-list">
         {% for event in events %}
-        <div class="request-item">
+        <div class="request-item" data-searchable="{{ event.event_id }} {{ event.event_type }} {{ event.triggered_by }} {{ event.severity_level }} {{ event.event_description }}">
             <div class="request-header">
                 <h4 class="event-id">{{ event.event_id }} - {{ event.event_type }}</h4>
                 <p class="severity-level">Severity: {{ event.severity_level }}</p>
@@ -25,6 +25,23 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.querySelector('[data-table-id="access-requests-table-container"]');
+        const requestList = document.getElementById('access-requests-table-container');
+        const requestItems = requestList.querySelectorAll('.request-item');
+
+        searchInput.addEventListener('input', function () {
+            const searchTerm = this.value.toLowerCase();
+
+            requestItems.forEach(item => {
+                const searchableText = item.getAttribute('data-searchable').toLowerCase();
+                if (searchableText.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
         const toggleLinks = document.querySelectorAll('.toggle-description');
 
         toggleLinks.forEach(link => {
