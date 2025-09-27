@@ -1,147 +1,121 @@
-@csrf_exempt
-@login_required
-@require_POST
-def update_event_status(request):
-    import json
-    data = json.loads(request.body)
-    event_id = data.get('event_id')
-    action = data.get('action')
-
-    if not event_id or action not in ['accept', 'reject']:
-        return JsonResponse({'success': False, 'error': 'Invalid input'}, status=400)
-
-    assigned_to = request.user.email
-    assigned_at = timezone.now()
-    eve_status = 'Accepted' if action == 'accept' else 'Rejected'
-
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                UPDATE event_status
-                SET assigned_to = %s, assigned_at = %s, eve_status = %s
-                WHERE event_id = %s
-                """,
-                [assigned_to, assigned_at, eve_status, event_id]
-            )
-        return JsonResponse({'success': True})
-    except Exception as e:
-        logger.error(f"Failed to update event status: {e}")
-        return JsonResponse({'success': False, 'error': 'Database error'}, status=500)
-
-
-
-    path('action/update-event-status/', views.update_event_status, name='update-event-status'),
-
-
-
-
-from django.views.decorators.csrf import csrf_exempt
-from django.db import connection
-
-
-
-
+<div class="mh-50vh">
+    <div class="access-requests" id="app-owner-requests-table-container">
+        <div class="request-list">
+            {% for event in app_owner_events %}
+            <div class="request-item" data-event-id="{{ event.event_id }}" data-searchable="{{ event.event_id }} {{ event.event_type }} {{ event.triggered_by }} {{ event.severity_level }} {{ event.event_description }} {{ event.assigned_at }}">
+                <div class="request-header">
+                    <h4 class="event-id">{{ event.event_id }} - {{ event.event_type }}</h4>
+                    <p class="severity-level">Severity: {{ event.severity_level }}</p>
+                </div>
+                <div class="request-body">
+                    <p class="triggered-by">Triggered By: {{ event.triggered_by }}</p>
+                    <p class="assigned-date">Assigned Date: {{ event.assigned_at }}</p>
+                    <div class="event-description">
+                        <div class="description-content short-description">{{ event.event_description|truncatechars:150 }}</div>
+                        <div class="description-content full-description" style="display: none; overflow-y: auto; max-height: 150px;">{{ event.event_description }}</div>
+                        <a href="#" class="toggle-description">Read More</a>
+                    </div>
+                </div>
+                <div class="request-actions">
+                    <button class="btn btn-success btn-action" style="margin-right: 10px;" data-action="mark-done">Mark as Done</button>
+                    <button class="btn btn-danger btn-action" data-action="reject">Reject</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.btn-action').forEach(function (button) {
-      button.addEventListener('click', function () {
-        const row = this.closest('tr');
-        const eventId = row.dataset.eventId;
-        const action = this.dataset.action; // "accept" or "reject"
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.querySelector('[data-table-id="app-owner-requests-table-container"]');
+        const requestList = document.getElementById('app-owner-requests-table-container');
+        const requestItems = requestList.querySelectorAll('.request-item');
 
-        fetch(`/action/update-event-status/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken') // Ensure CSRF token is included
-          },
-          body: JSON.stringify({ event_id: eventId, action: action })
-        })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              row.style.transition = 'opacity 0.5s';
-              row.style.opacity = 0;
-              setTimeout(() => row.remove(), 500);
-            } else {
-              alert('Failed to update status: ' + data.error);
-            }
-          })
-          .catch(error => console.error('Error:', error));
-      });
+        searchInput.addEventListener('input', function () {
+            const searchTerm = this.value.toLowerCase();
+
+            requestItems.forEach(item => {
+                const searchableText = item.getAttribute('data-searchable').toLowerCase();
+                if (searchableText.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        const toggleLinks = document.querySelectorAll('.toggle-description');
+
+        toggleLinks.forEach(link => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                const parent = this.closest('.event-description');
+                const shortDesc = parent.querySelector('.short-description');
+                const fullDesc = parent.querySelector('.full-description');
+
+                if (shortDesc.style.display === 'none') {
+                    shortDesc.style.display = '';
+                    fullDesc.style.display = 'none';
+                    this.textContent = 'Read More';
+                } else {
+                    shortDesc.style.display = 'none';
+                    fullDesc.style.display = '';
+                    this.textContent = 'Read Less';
+                }
+            });
+        });
     });
-
-    function getCookie(name) {
-      let cookieValue = null;
-      if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-          const cookie = cookies[i].trim();
-          if (cookie.substring(0, name.length + 1) === (name + '=')) {
-            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-            break;
-          }
-        }
-      }
-      return cookieValue;
-    }
-  });
 </script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.btn-action').forEach(function (button) {
-      console.log('Binding to button:', button);
-      button.addEventListener('click', function () {
-        console.log('Button clicked:', this);
-        const row = this.closest('.request-item'); // Updated to find the correct parent element
-        if (!row) {
-          console.error('Parent element with class .request-item not found');
-          return;
-        }
-        const eventId = row.dataset.eventId;
-        const action = this.dataset.action; // "accept" or "reject"
-
-        console.log('Event ID:', eventId, 'Action:', action);
-
-        fetch(`/action/update-event-status/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken') // Ensure CSRF token is included
-          },
-          body: JSON.stringify({ event_id: eventId, action: action })
-        })
-          .then(response => response.json())
-          .then(data => {
-            console.log('Response:', data);
-            if (data.success) {
-              row.style.transition = 'opacity 0.5s';
-              row.style.opacity = 0;
-              setTimeout(() => row.remove(), 500);
-            } else {
-              alert('Failed to update status: ' + data.error);
-            }
-          })
-          .catch(error => console.error('Error:', error));
-      });
-    });
-
-    function getCookie(name) {
-      let cookieValue = null;
-      if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-          const cookie = cookies[i].trim();
-          if (cookie.substring(0, name.length + 1) === (name + '=')) {
-            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-            break;
-          }
-        }
-      }
-      return cookieValue;
+<style>
+    .access-requests {
+        margin: 20px;
+        font-family: Arial, sans-serif;
     }
-  });
-</script>
-
+    .request-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    .request-item {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        background-color: #fff;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .request-header {
+        margin-bottom: 10px;
+    }
+    .event-id {
+        font-size: 16px;
+        font-weight: bold;
+        color: #333;
+    }
+    .severity-level {
+        font-size: 14px;
+        color: #777;
+    }
+    .request-body {
+        margin-bottom: 10px;
+        color: #555;
+    }
+    .assigned-date {
+        font-size: 13px;
+        color: #777;
+    }
+    .event-description {
+        position: relative;
+    }
+    .description-content {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    .triggered-by {
+        font-size: 13px;
+        color: #777;
+    }
+    .request-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+</style>
