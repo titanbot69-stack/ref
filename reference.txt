@@ -1,37 +1,3 @@
-@csrf_exempt
-@login_required
-@require_POST
-def update_application_owner_event_status(request):
-    import json
-    data = json.loads(request.body)
-    event_id = data.get('event_id')
-    action = data.get('action')
-
-    if not event_id or action not in ['accept', 'reject']:
-        return JsonResponse({'success': False, 'error': 'Invalid input'}, status=400)
-
-    assigned_to = request.user.email
-    assigned_at = timezone.now()
-    eve_status = 'Completed' if action == 'accept' else 'Rejected'
-
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                UPDATE application_owner_event_status
-                SET assigned_to = %s, assigned_at = %s, eve_status = %s
-                WHERE event_id = %s
-                """,
-                [assigned_to, assigned_at, eve_status, event_id]
-            )
-        return JsonResponse({'success': True})
-    except Exception as e:
-        logger.error(f"Failed to update application owner event status: {e}")
-        return JsonResponse({'success': False, 'error': 'Database error'}, status=500)
-
-
-
-    document.addEventListener('DOMContentLoaded', function () {
         const requestList = document.getElementById('app-owner-requests-table-container');
 
         requestList.addEventListener('click', function (e) {
@@ -47,13 +13,13 @@ def update_application_owner_event_status(request):
                 return;
             }
 
-            fetch('/update_event_status/', {
+            fetch('/update_application_request_status/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                body: JSON.stringify({ event_id: eventId, action: action === 'mark-done' ? 'accept' : 'reject' })
+                body: JSON.stringify({ event_id: eventId, action: action })
             })
                 .then(response => response.json())
                 .then(data => {
@@ -85,4 +51,34 @@ def update_application_owner_event_status(request):
             }
             return cookieValue;
         }
-    });
+
+@csrf_exempt
+@login_required
+@require_POST
+def update_application_request_status(request):
+    import json
+    data = json.loads(request.body)
+    event_id = data.get('event_id')
+    action = data.get('action')
+
+    if not event_id or action not in ['mark-done', 'reject']:
+        return JsonResponse({'success': False, 'error': 'Invalid input'}, status=400)
+
+    assigned_to = request.user.email
+    assigned_at = timezone.now()
+    eve_status = 'Closed'
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE eve_status
+                SET assigned_to = %s, assigned_at = %s, eve_status = %s
+                WHERE event_id = %s
+                """,
+                [assigned_to, assigned_at, eve_status, event_id]
+            )
+        return JsonResponse({'success': True})
+    except Exception as e:
+        logger.error(f"Failed to update application request status: {e}")
+        return JsonResponse({'success': False, 'error': 'Database error'}, status=500)
