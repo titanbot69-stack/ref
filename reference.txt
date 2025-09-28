@@ -1,57 +1,20 @@
-                    <button class="btn btn-success btn-app-owner-action" style="margin-right: 10px;" data-app-owner-action="mark-done">Mark as Done</button>
-                    <button class="btn btn-danger btn-app-owner-action" data-app-owner-action="reject">Reject</button>
-
-
-        const requestList = document.getElementById('app-owner-requests-table-container');
-
         requestList.addEventListener('click', function (e) {
-            const button = e.target.closest('.btn-app-owner-action'); // Updated class name
-            if (!button) return;
+            const toggleLink = e.target.closest('.toggle-description');
+            if (!toggleLink) return;
 
-            const action = button.getAttribute('data-app-owner-action'); // Updated data attribute
-            const requestItem = button.closest('.request-item');
-            const eventId = requestItem.getAttribute('data-event-id');
+            const eventDescription = toggleLink.closest('.event-description');
+            const shortDescription = eventDescription.querySelector('.short-description');
+            const fullDescription = eventDescription.querySelector('.full-description');
 
-            if (!action || !eventId) {
-                console.error('Action or Event ID missing.');
-                return;
+            if (shortDescription.style.display === 'none') {
+                shortDescription.style.display = '';
+                fullDescription.style.display = 'none';
+                toggleLink.textContent = 'Read More';
+            } else {
+                shortDescription.style.display = 'none';
+                fullDescription.style.display = '';
+                toggleLink.textContent = 'Read Less';
             }
 
-            fetch('/update_application_request_status/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({ event_id: eventId, action: action })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        requestItem.style.transition = 'opacity 0.5s';
-                        requestItem.style.opacity = '0';
-                        setTimeout(() => requestItem.remove(), 500);
-                    } else {
-                        alert('Failed to update event status: ' + (data.error || 'Unknown error'));
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while updating the event status.');
-                });
+            e.preventDefault();
         });
-
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
