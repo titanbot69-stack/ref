@@ -82,3 +82,5 @@ def update_application_request_status(request):
     except Exception as e:
         logger.error(f"Failed to update application request status: {e}")
         return JsonResponse({'success': False, 'error': 'Database error'}, status=500)
+
+path('update_application_request_status/', views.update_application_request_status, name='update-application-request-status'),
