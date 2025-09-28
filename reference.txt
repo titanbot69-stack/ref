@@ -1,10 +1,14 @@
+                    <button class="btn btn-success btn-app-owner-action" style="margin-right: 10px;" data-app-owner-action="mark-done">Mark as Done</button>
+                    <button class="btn btn-danger btn-app-owner-action" data-app-owner-action="reject">Reject</button>
+
+
         const requestList = document.getElementById('app-owner-requests-table-container');
 
         requestList.addEventListener('click', function (e) {
-            const button = e.target.closest('.btn-action');
+            const button = e.target.closest('.btn-app-owner-action'); // Updated class name
             if (!button) return;
 
-            const action = button.getAttribute('data-action');
+            const action = button.getAttribute('data-app-owner-action'); // Updated data attribute
             const requestItem = button.closest('.request-item');
             const eventId = requestItem.getAttribute('data-event-id');
 
@@ -51,36 +55,3 @@
             }
             return cookieValue;
         }
-
-@csrf_exempt
-@login_required
-@require_POST
-def update_application_request_status(request):
-    import json
-    data = json.loads(request.body)
-    event_id = data.get('event_id')
-    action = data.get('action')
-
-    if not event_id or action not in ['mark-done', 'reject']:
-        return JsonResponse({'success': False, 'error': 'Invalid input'}, status=400)
-
-    assigned_to = request.user.email
-    assigned_at = timezone.now()
-    eve_status = 'Closed'
-
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                UPDATE eve_status
-                SET assigned_to = %s, assigned_at = %s, eve_status = %s
-                WHERE event_id = %s
-                """,
-                [assigned_to, assigned_at, eve_status, event_id]
-            )
-        return JsonResponse({'success': True})
-    except Exception as e:
-        logger.error(f"Failed to update application request status: {e}")
-        return JsonResponse({'success': False, 'error': 'Database error'}, status=500)
-
-path('update_application_request_status/', views.update_application_request_status, name='update-application-request-status'),
