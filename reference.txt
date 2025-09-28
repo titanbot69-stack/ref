@@ -1,8 +1,19 @@
-<!-- Updated search box for RA User Access -->
-        <div class="modern-search-box">
-          <i class="fas fa-search"></i>
-          <input type="text" data-table-id="ra-application-request-table-container" placeholder="Search...">
-        </div>
-        <div id="ra-application-request-table-container">
-          {% include 'partials/ra_application_owner_request.html' %}
-        </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInputs = document.querySelectorAll('.modern-search-box input');
+
+        searchInputs.forEach(input => {
+            input.addEventListener('input', function () {
+                const containerId = this.getAttribute('data-table-id');
+                const filter = this.value.toLowerCase();
+                const container = document.getElementById(containerId);
+                const items = container.querySelectorAll('.request-item');
+
+                items.forEach(item => {
+                    const searchableText = item.getAttribute('data-searchable')?.toLowerCase() || '';
+                    item.style.display = searchableText.includes(filter) ? '' : 'none';
+                });
+            });
+        });
+    });
+</script>
