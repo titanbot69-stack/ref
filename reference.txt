@@ -1,19 +1,88 @@
-<script>
+@csrf_exempt
+@login_required
+@require_POST
+def update_application_owner_event_status(request):
+    import json
+    data = json.loads(request.body)
+    event_id = data.get('event_id')
+    action = data.get('action')
+
+    if not event_id or action not in ['accept', 'reject']:
+        return JsonResponse({'success': False, 'error': 'Invalid input'}, status=400)
+
+    assigned_to = request.user.email
+    assigned_at = timezone.now()
+    eve_status = 'Completed' if action == 'accept' else 'Rejected'
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE application_owner_event_status
+                SET assigned_to = %s, assigned_at = %s, eve_status = %s
+                WHERE event_id = %s
+                """,
+                [assigned_to, assigned_at, eve_status, event_id]
+            )
+        return JsonResponse({'success': True})
+    except Exception as e:
+        logger.error(f"Failed to update application owner event status: {e}")
+        return JsonResponse({'success': False, 'error': 'Database error'}, status=500)
+
+
+
     document.addEventListener('DOMContentLoaded', function () {
-        const searchInputs = document.querySelectorAll('.modern-search-box input');
+        const requestList = document.getElementById('app-owner-requests-table-container');
 
-        searchInputs.forEach(input => {
-            input.addEventListener('input', function () {
-                const containerId = this.getAttribute('data-table-id');
-                const filter = this.value.toLowerCase();
-                const container = document.getElementById(containerId);
-                const items = container.querySelectorAll('.request-item');
+        requestList.addEventListener('click', function (e) {
+            const button = e.target.closest('.btn-action');
+            if (!button) return;
 
-                items.forEach(item => {
-                    const searchableText = item.getAttribute('data-searchable')?.toLowerCase() || '';
-                    item.style.display = searchableText.includes(filter) ? '' : 'none';
+            const action = button.getAttribute('data-action');
+            const requestItem = button.closest('.request-item');
+            const eventId = requestItem.getAttribute('data-event-id');
+
+            if (!action || !eventId) {
+                console.error('Action or Event ID missing.');
+                return;
+            }
+
+            fetch('/update_event_status/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ event_id: eventId, action: action === 'mark-done' ? 'accept' : 'reject' })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        requestItem.style.transition = 'opacity 0.5s';
+                        requestItem.style.opacity = '0';
+                        setTimeout(() => requestItem.remove(), 500);
+                    } else {
+                        alert('Failed to update event status: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while updating the event status.');
                 });
-            });
         });
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     });
-</script>
