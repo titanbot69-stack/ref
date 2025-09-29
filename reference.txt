@@ -1,20 +1,26 @@
-        requestList.addEventListener('click', function (e) {
-            const toggleLink = e.target.closest('.toggle-description');
-            if (!toggleLink) return;
-
-            const eventDescription = toggleLink.closest('.event-description');
-            const shortDescription = eventDescription.querySelector('.short-description');
-            const fullDescription = eventDescription.querySelector('.full-description');
-
-            if (shortDescription.style.display === 'none') {
-                shortDescription.style.display = '';
-                fullDescription.style.display = 'none';
-                toggleLink.textContent = 'Read More';
-            } else {
-                shortDescription.style.display = 'none';
-                fullDescription.style.display = '';
-                toggleLink.textContent = 'Read Less';
-            }
-
-            e.preventDefault();
-        });
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th>History ID</th>
+                        <th>Event ID</th>
+                        <th>Action</th>
+                        <th>Performed By</th>
+                        <th>Performed At</th>
+                        <th>Status After Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in event_history_data %}
+                    <tr>
+                        <td>{{ log.history_id }}</td>
+                        <td>{{ log.event_id }}</td>
+                        <td>{{ log.action }}</td>
+                        <td>{{ log.performed_by }}</td>
+                        <td>{{ log.performed_at }}</td>
+                        <td>{{ log.status_after_action }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+      </div>
