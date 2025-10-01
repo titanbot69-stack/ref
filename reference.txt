@@ -1,2 +1,5 @@
-    /* Login page layout overrides */
-  .main-content { max-width:100%!important; padding:0!important; margin:0!important; flex:1 1 auto; display:block; height:auto; }
+@require_POST
+def logout_view(request):
+    """POST-only logout to avoid clashes with SSO libs expecting GET on other paths."""
+    auth_logout(request)
+    return redirect('login')
