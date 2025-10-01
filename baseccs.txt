@@ -1,0 +1,21 @@
+html, body {
+  height: 100%;
+}
+.wrapper {
+  background: linear-gradient(45deg,#ff512f,#f09819); /* theme */
+  min-height: 100vh;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.container {
+  height: 100vh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+.mh-50vh {
+  max-height: 65vh;
+  overflow: auto;
+}
