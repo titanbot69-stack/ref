@@ -1,94 +1,111 @@
-html, body {
-  height: 100%;
-}
-.wrapper {
-  background: linear-gradient(45deg,#ff512f,#f09819); /* theme */
-  min-height: 100vh;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-/* Accessibility */
-.skip-link {
-  position: absolute;
-  left: -1000px;
-  top: auto;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  z-index: -1;
-}
-.skip-link:focus { left: 12px; top: 12px; width: auto; height: auto; padding: 8px 14px; background:#fff; border-radius:6px; z-index: 9999; }
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Swadhikaar • Login{% endblock %}
+{% block content %}
+  <link rel="stylesheet" href="{% static 'css/login.css' %}">
+  <style>
+    /* Login page layout overrides */
+  .main-content { max-width:100%!important; padding:0!important; margin:0!important; flex:1 1 auto; display:block; height:auto; }
+    body, .wrapper { min-height:100vh; }
+  </style>
+  <div class="swadhikaar-login login-full-bleed">
+    <div class="visual-pane">
+      <div class="visual-bg" style="background-image:url('{% static 'images/bg3.jpeg' %}');"></div>
+      <div class="visual-gradient"></div>
+      <div class="wave-wrapper">
+        <svg class="wave-svg" viewBox="0 0 1440 600" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#0c44b8"/>
+              <stop offset="50%" stop-color="#ff7c26"/>
+              <stop offset="100%" stop-color="#fca937"/>
+            </linearGradient>
+            <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="18" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <path class="wave-path" fill="none" stroke="url(#waveGrad)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"
+                d="M0 360 Q180 300 360 360 T720 360 T1080 360 T1440 360" />
+          <path class="wave-path2" fill="none" stroke="url(#waveGrad)" stroke-width="2" stroke-dasharray="6 14"
+                d="M0 330 Q180 270 360 330 T720 330 T1080 330 T1440 330" />
+        </svg>
+      </div>
+      <div class="visual-copy">
+        <div class="swadhikaar-logo-badge mb-4">
+          <img src="{% static 'images/swadhikaar.jpeg' %}" alt="Swadhikaar" class="swadhikaar-logo-img" />
+        </div>
+        <h1 class="brand-name">Swadhikaar</h1>
+        <p class="tagline">Empower access. Enable identity. Elevate trust.</p>
+        <ul class="key-points">
+          <li><i class="bi bi-lightning-charge"></i> Instant Provisioning</li>
+          <li><i class="bi bi-shield-check"></i> Adaptive Security</li>
+          <li><i class="bi bi-diagram-3"></i> Intelligent Roles</li>
+        </ul>
+      </div>
+    </div>
+    <div class="auth-pane">
+      <div class="auth-blob" aria-hidden="true"></div>
+      <div class="auth-card">
+        <div class="solid-bg-layer" aria-hidden="true"></div>
+        <div class="mini-logo mb-4 text-center">
+          <img src="{% static 'images/Nido.png' %}" alt="Swadhikaar" height="56" />
+        </div>
+        <h2 class="mb-1 fw-semibold heading">Welcome Back</h2>
+        <p class="text-muted mb-4 subheading">Login to continue to <strong>Swadhikaar</strong></p>
+        {% if error %}<div class="alert alert-danger py-2 px-3 small rounded-3">{{ error }}</div>{% endif %}
+        <form method="post" class="sw-login-form" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ next|default:'/dashboard/' }}" />
+          <div class="form-group mb-3">
+            <label for="email" class="form-label">Work Email</label>
+            <input id="email" class="form-control form-control-lg" type="email" name="email" placeholder="you@company.com" required autocomplete="email" />
+          </div>
+          <div class="form-group mb-4 position-relative">
+            <label for="bypass" class="form-label d-flex justify-content-between align-items-center">Bypass (First Name)
+              <span class="text-muted small">Temporary</span>
+            </label>
+            <input id="bypass" class="form-control form-control-lg" type="text" name="first_name" placeholder="Your first name" autocomplete="off" />
+          </div>
+          <div class="d-grid gap-3">
+            <button class="btn btn-sw-primary btn-lg py-2" type="submit">
+              <span>Login (Bypass)</span> <i class="bi bi-arrow-right ms-2"></i>
+            </button>
+            <a class="btn btn-outline-sw btn-lg py-2" href="/auth/azure/login/">
+              <i class="bi bi-windows me-2"></i> Azure SSO
+            </a>
+          </div>
+        </form>
+        <div class="mt-4 d-flex justify-content-between small aux-links">
+          <a href="#">Need help?</a>
+          <a href="#">Privacy</a>
+        </div>
+        <div class="copy-footer small text-muted mt-5">© {{ now|date:'Y' }} Swadhikaar. All rights reserved.</div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
 
-/* Modern Global Header */
-.global-header {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(14px) saturate(160%);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  border-bottom: 1px solid rgba(255,255,255,0.18);
-}
-.gh-inner {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  padding: .65rem clamp(1rem,2vw,2rem);
-}
-.brand-group { display: flex; align-items: center; gap: .85rem; }
-.brand { display: flex; align-items: center; gap: .6rem; text-decoration: none; }
-.brand-logo { height:52px; width:auto; display:block; }
-.brand-text { font-size: 1.25rem; font-weight:600; color:#fff; letter-spacing:.5px; }
-
-/* Navigation */
-.primary-nav { margin-left: auto; }
-.primary-nav .nav-list { list-style:none; display:flex; gap:.35rem; margin:0; padding:0; }
-.nav-link { position:relative; display:flex; align-items:center; gap:.45rem; padding:.55rem .9rem; color:#fff; font-weight:500; text-decoration:none; font-size:.9rem; border-radius: .65rem; line-height:1.1; }
-.nav-link i { font-size:1.05rem; opacity:.9; }
-.nav-link:hover { background:rgba(255,255,255,0.12); color:#fff; }
-.nav-link.active { background:linear-gradient(135deg,#ff512f,#f09819); color:#fff; box-shadow:0 2px 6px -2px rgba(0,0,0,.45); }
-
-/* User area */
-.user-area { display:flex; align-items:center; gap:1rem; }
-.user-btn { background:rgba(255,255,255,0.14); border:1px solid rgba(255,255,255,0.25); color:#fff; display:flex; align-items:center; gap:.65rem; padding:.4rem .65rem; border-radius: 40px; font-size:.8rem; font-weight:500; line-height:1; }
-.user-btn:hover { background:rgba(255,255,255,0.22); }
-.user-btn:focus { outline:2px solid rgba(255,255,255,.55); outline-offset:2px; }
-.avatar { width:34px; height:34px; flex:0 0 34px; display:flex; align-items:center; justify-content:center; font-weight:600; background:linear-gradient(135deg,#ff512f,#f09819); color:#fff; border-radius:50%; font-size:.95rem; letter-spacing:.5px; }
-.user-meta { display:flex; flex-direction:column; align-items:flex-start; }
-.user-name { font-size:.75rem; font-weight:600; line-height:1.05; color:#fff; }
-.user-email { font-size:.65rem; color:rgba(255,255,255,.75); letter-spacing:.3px; }
-.dropdown-menu { font-size:.85rem; }
-.dropdown-item:active { background:linear-gradient(135deg,#ff512f,#f09819); }
-
-/* Mobile nav toggle */
-.nav-toggle { display:none; width:42px; height:42px; background:rgba(255,255,255,0.14); border:1px solid rgba(255,255,255,0.25); border-radius:10px; padding:0 .65rem; flex-direction:column; justify-content:center; align-items:center; gap:5px; cursor:pointer; }
-.nav-toggle span { display:block; width:100%; height:2px; background:#fff; transition:.45s cubic-bezier(.68,-0.55,.27,1.55); }
-.nav-toggle.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
-.nav-toggle.open span:nth-child(2) { opacity:0; }
-.nav-toggle.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
-
-/* Main content layout */
-.main-content { width:100%; padding:1.2rem clamp(1.2rem,2vw,2.5rem) 3rem; flex:1; display:flex; flex-direction:column; }
-
-/* Responsive */
-@media (max-width: 1100px) {
-  .nav-link span { display:none; }
-  .nav-link { padding:.55rem .75rem; }
-}
-@media (max-width: 880px) {
-  .primary-nav { position:fixed; inset:70px auto auto 0; width:100%; background:rgba(20,20,20,.8); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); padding:.75rem 1rem 1.25rem; transform:translateY(-140%); transition:.5s cubic-bezier(.83,0,.17,1); }
-  .primary-nav.open { transform:translateY(0); }
-  .primary-nav .nav-list { flex-direction:column; align-items:flex-start; }
-  .nav-toggle { display:flex; }
-  .gh-inner { flex-wrap:wrap; }
-  .brand-group { flex:1; }
-}
-
-/* Utility */
-.shadow-sm { box-shadow:0 4px 28px -8px rgba(0,0,0,.35); }
-
-.mh-50vh {
-  max-height: 65vh;
-  overflow: auto;
-}
+{% block scripts %}
+  {{ block.super }}
+  <script>
+    // Subtle wave animation using requestAnimationFrame to adjust quadratic control points
+    (function(){
+      const p1 = document.querySelector('.wave-path');
+      const p2 = document.querySelector('.wave-path2');
+      if(!p1||!p2) return;
+      let t=0; function anim(){
+        t+=0.015; const amp=40; const amp2=28;
+        const yBase1=360; const yBase2=330;
+        const c1 = yBase1 - Math.sin(t)*amp;
+        const c2 = yBase2 - Math.cos(t*1.15)*amp2;
+        p1.setAttribute('d',`M0 ${yBase1} Q180 ${c1} 360 ${yBase1} T720 ${yBase1} T1080 ${yBase1} T1440 ${yBase1}`);
+        p2.setAttribute('d',`M0 ${yBase2} Q180 ${c2} 360 ${yBase2} T720 ${yBase2} T1080 ${yBase2} T1440 ${yBase2}`);
+        requestAnimationFrame(anim);
+      } requestAnimationFrame(anim);
+    })();
+  </script>
+{% endblock %}
