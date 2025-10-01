@@ -1,84 +1,13 @@
-@login_required
-def admin_dashboard(request):
-    email = (request.user.email or '').lower()
-    # Authorization: must be admin by legacy rule or CTO designation
-    hrms_row = next((r for r in get_hrms_list() if (r.get('business_email') or '').lower() == email), None)
-    external_designation = (hrms_row or {}).get('external_designation', '')
-    if not (email == 'admin@test.com' or external_designation == 'Chief Technology Officer'):
-        return HttpResponseForbidden('Not an admin')
-    all_rows = get_hrms_list()
-    nido_rows_full = [
-        {**r, 'presence': presence_for_email(r.get('business_email'))}
-        for r in all_rows if 'nido' in (r.get('entity_name') or '').lower()
-    ]
-    context = {
-        'first_name': request.user.first_name,
-        'user_email': email,
-        'nido_rows': nido_rows_full,
-        'events': DUMMY_EVENTS,
-        'event_history_data': event_history_data,
-        'is_admin': True,
-    }
-    return render(request, 'admin_dashboard.html', context)
-
-
-@login_required
-def ra_dashboard(request):
-    email = (request.user.email or '').lower()
-    all_rows = get_hrms_list()
-    my_rows = [r for r in all_rows if (r.get('ra_email') or '').lower() == email]
-    if not my_rows:
-        return HttpResponseForbidden('Not an RA')
-    active_rows = [r for r in my_rows if r.get('employee_status') == 'A']
-    ra_access_rows = []
-    for emp in my_rows:
-        presence = presence_for_email(emp.get('business_email'))
-        ra_access_rows.append({
-            'emp_code': emp['emp_code'],
-            'first_name': emp['first_name'],
-            'last_name': emp['last_name'],
-            'business_email': emp['business_email'],
-            'presence': presence,
-            'module': emp.get('module', ''),
-            'user_role': emp.get('user_role', ''),
-            'menu_name': emp.get('menu_name', ''),
-            'user_role_name': emp.get('user_role_name', ''),
-            'roles': emp.get('roles', ''),
-            'status_tc': emp.get('status_tc', ''),
-        })
-    ra_access_page_param = request.GET.get('ra_access_page') or 1
-    ra_access_paginator = Paginator(ra_access_rows, 25)
-    ra_access_page_obj = ra_access_paginator.get_page(ra_access_page_param)
-    context = {
-        'first_name': request.user.first_name,
-        'user_email': email,
-        'my_rows': my_rows,
-        'active_rows': active_rows,
-        'ra_access_page_obj': ra_access_page_obj,
-        'is_ra': True,
-    }
-    return render(request, 'ra_dashboard.html', context)
-
-
-@login_required
-def application_owner_dashboard(request):
-    email = (request.user.email or '').lower()
-    owner_emails = {o['email_id'].lower() for o in application_owners}
-    if email not in owner_emails:
-        return HttpResponseForbidden('Not an application owner')
-    # Filter events assigned to application owner relevant apps
-    app_owner_events = []
-    for event in DUMMY_EVENTS:
-        if event.get('assigned_to') == 'Application Owner':
-            app_code = event.get('application')
-            owner_ids = [m['owner_id'] for m in application_owner_mapping if m['app_code'] == app_code]
-            mapped_emails = [o['email_id'] for o in application_owners if o['owner_id'] in owner_ids]
-            if email in {me.lower() for me in mapped_emails}:
-                app_owner_events.append(event)
-    context = {
-        'first_name': request.user.first_name,
-        'user_email': email,
-        'app_owner_events': app_owner_events,
-        'is_application_owner': True,
-    }
-    return render(request, 'application_owner_dashboard.html', context)
+.tile-grid{display:grid;gap:2rem;grid-template-columns:repeat(4,260px);margin:0 auto 1.2rem;max-width:calc(4*260px + 3*2rem);width:100%;justify-content:flex-start}
+/* Fixed four columns on wide screens; wrap after 4 so 5th starts next row. */
+@media (max-width:1300px){
+	/* When viewport narrower than total fixed width, reduce columns to avoid horizontal scroll */
+	.tile-grid{grid-template-columns:repeat(3,260px);max-width:calc(3*260px + 2*2rem)}
+}
+@media (max-width:1000px){
+	.tile-grid{grid-template-columns:repeat(2,260px);max-width:calc(2*260px + 1*2rem)}
+}
+@media (max-width:560px){
+	.tile-grid{grid-template-columns:repeat(1,260px);max-width:260px;gap:1.25rem}
+	.ws-tile{min-height:160px}
+}
