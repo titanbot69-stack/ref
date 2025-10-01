@@ -1,19 +1,15 @@
-{% extends 'base.html' %}
-{% block title %}Access Overview{% endblock %}
-{% block content %}
-<div class="container py-5">
-  <h2 class="mb-3">Access Overview</h2>
-  <p>Your account does not currently map to any of the configured dashboard roles:</p>
-  <ul>
-    <li>Admin (email: admin@test.com)</li>
-    <li>RA (must supervise at least one employee via HRMS data)</li>
-    <li>Application Owner (events assigned & ownership mapping)</li>
-  </ul>
-  <p>If you believe this is incorrect you can:</p>
-  <ol>
-    <li>Return to your <a href="/my-workspace/">Workspace</a></li>
-    <li>Contact an administrator to assign appropriate role or data mapping</li>
-  </ol>
-  <a href="/my-workspace/" class="btn btn-primary" style="background:#ff512f;border-color:#ff512f">Back to Workspace</a>
-</div>
-{% endblock %}
+    path('logout/', views.logout_view, name='logout'),  # POST only
+    path('my-workspace/', views.my_workspace, name='my-workspace'),
+
+
+    # Dedicated role dashboards
+    path('dashboard/admin/', views.admin_dashboard, name='admin-dashboard'),
+    path('dashboard/ra/', views.ra_dashboard, name='ra-dashboard'),
+    path('dashboard/app-owner/', views.application_owner_dashboard, name='application-owner-dashboard'),
+
+
+    path('action/update-event-status/', views.update_event_status, name='update-event-status'),
+
+
+    path('get-application-data/', views.get_application_data, name='get-application-data'),
+    path('update_application_request_status/', views.update_application_request_status, name='update-application-request-status'),
