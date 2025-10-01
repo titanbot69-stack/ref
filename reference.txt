@@ -1,99 +1,35 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Admin Dashboard{% endblock %}
+{% block title %}Application Owner Dashboard{% endblock %}
 {% block content %}
-<!-- Roles Modal -->
-<div class="modal fade" id="rolesModal" tabindex="-1" aria-labelledby="rolesModalLabel" aria-hidden="true">
-	<div class="modal-dialog">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title" id="rolesModalLabel">Application Roles</h5>
-				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-			</div>
-			<div class="modal-body">
-				<div id="roles-list-container"></div>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-primary" style="background:#ff512f;border-color:#ff512f" data-bs-dismiss="modal">Close</button>
-			</div>
-		</div>
-	</div>
-</div>
-
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-<div class="d-flex justify-content-between align-items-center mb-3">
-	<h2 class="m-0">Admin Dashboard</h2>
-	<a class="btn btn-primary" style="background:#ff512f;border-color:#ff512f" href="/action/initiate-certification/">Initiate Certification</a>
-</div>
-<ul class="nav nav-tabs" id="adminTabs" role="tablist">
-	<li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#emp" type="button" role="tab">Employee Details</button></li>
-	<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#access" type="button" role="tab">User Access</button></li>
-	<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#app" type="button" role="tab">Application Access</button></li>
-	<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#request-tab" type="button" role="tab">Access Requests</button></li>
-	<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#event-logs" type="button" role="tab">Event Logs</button></li>
+<h2 class="mb-3">Application Owner Dashboard</h2>
+<ul class="nav nav-tabs" role="tablist">
+	<li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#application-requests" type="button">Application Requests</button></li>
 </ul>
 <div class="tab-content p-3 border border-top-0 card-like">
-	<div class="tab-pane fade show active" id="emp" role="tabpanel">
-		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="employee-details-table-container" placeholder="Search..."></div>
-		<div id="employee-details-table-container">{% include 'partials/employee_details_table.html' %}</div>
-	</div>
-	<div class="tab-pane fade" id="access" role="tabpanel">
-		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="user-access-table-container" placeholder="Search..."></div>
-		<div id="user-access-table-container">{% include 'partials/user_access_table.html' %}</div>
-	</div>
-	<div class="tab-pane fade" id="app" role="tabpanel">
-		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="application-access-table-body" placeholder="Search..."></div>
-		<div id="application-access-table-container">{% include 'partials/application_access_table.html' %}</div>
-	</div>
-	<div class="tab-pane fade" id="request-tab" role="tabpanel">
-		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="access-requests-table-container" placeholder="Search..."></div>
-		<div id="access-requests-table-container">{% include 'partials/access_requests_table.html' %}</div>
-	</div>
-	<div class="tab-pane fade" id="event-logs" role="tabpanel">
-		<div class="table-responsive">
-			<table class="table table-sm table-striped">
-				<thead><tr><th>History ID</th><th>Event ID</th><th>Action</th><th>Performed By</th><th>Performed At</th><th>Status After Action</th></tr></thead>
-				<tbody>
-				{% for log in event_history_data %}
-					<tr>
-						<td>{{ log.history_id }}</td>
-						<td>{{ log.event_id }}</td>
-						<td>{{ log.action }}</td>
-						<td>{{ log.performed_by }}</td>
-						<td>{{ log.performed_at }}</td>
-						<td>{{ log.status_after_action }}</td>
-					</tr>
-				{% endfor %}
-				</tbody>
-			</table>
-		</div>
+	<div class="tab-pane fade show active" id="application-requests">
+		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="app-owner-requests-table-container" placeholder="Search..."></div>
+		<div id="app-owner-requests-table-container">{% include 'partials/ra_application_owner_request.html' %}</div>
 	</div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 {{ block.super }}
+<style>
+.modern-search-box{position:relative;margin-bottom:10px;width:300px;float:right;}
+.modern-search-box input{width:100%;padding:8px 30px;border:1px solid #ddd;border-radius:20px;box-shadow:0 2px 4px rgba(0,0,0,.1);font-size:14px;transition:all .3s ease;}
+.modern-search-box input:focus{border-color:#ff512f;box-shadow:0 4px 8px rgba(0,0,0,.15);outline:none;}
+.modern-search-box i{position:absolute;top:50%;left:10px;transform:translateY(-50%);font-size:16px;color:#aaa;}
+</style>
 <script>
-// Shared helper
 function getCookie(name){let v=null;if(document.cookie&&document.cookie!==''){const cs=document.cookie.split(';');for(let i=0;i<cs.length;i++){const c=cs[i].trim();if(c.substring(0,name.length+1)===(name+'=')){v=decodeURIComponent(c.substring(name.length+1));break;}}}return v;}
 
-// Roles modal (eye buttons)
-document.addEventListener('DOMContentLoaded',function(){
-	document.body.addEventListener('click',function(e){const btn=e.target.closest('.eye-btn');if(btn&&!btn.disabled){btn.classList.remove('eye-animate');void btn.offsetWidth;btn.classList.add('eye-animate');const roles=btn.getAttribute('data-roles')||'';const app=btn.getAttribute('data-app')||'';const emp=btn.getAttribute('data-emp')||'';const modal=new bootstrap.Modal(document.getElementById('rolesModal'));const container=document.getElementById('roles-list-container');let html='';if(roles.trim()){const roleList=roles.split(',').map(r=>r.trim()).filter(Boolean);html='<ul class="list-group roles-list-scroll">'+roleList.map(r=>`<li class="list-group-item">${r}</li>`).join('')+'</ul>';}else{html='<div class="text-muted">No roles found.</div>';}container.innerHTML=`<div class="mb-2"><strong>Employee:</strong> ${emp}</div><div class="mb-2"><strong>Application:</strong> ${app.toUpperCase()}</div>`+html;modal.show();}});
-});
+// Local search (delegated because partial already ships JS, but we consolidate here for future DRY)
+document.addEventListener('DOMContentLoaded',function(){document.querySelectorAll('.modern-search-box input').forEach(inp=>{inp.addEventListener('input',function(){const id=this.getAttribute('data-table-id');const container=document.getElementById(id);if(!container)return;const items=container.querySelectorAll('.request-item');const f=this.value.toLowerCase();items.forEach(it=>{const search=it.getAttribute('data-searchable')?.toLowerCase()||'';it.style.display=search.includes(f)?'':'none';});});});});
 
-// AJAX pagination (admin)
-function bindAdminUserAccess(){document.querySelectorAll('.access-page-link').forEach(l=>{l.addEventListener('click',e=>{e.preventDefault();const url='/ajax/user-access-table/'+l.getAttribute('href');const c=document.getElementById('user-access-table-container');if(!c)return;c.innerHTML='<div class="text-center py-4">Loading...</div>';fetch(url).then(r=>r.text()).then(h=>{c.innerHTML=h;bindAdminUserAccess();});});});}
-bindAdminUserAccess();
-
-// Application access loader
-document.addEventListener('DOMContentLoaded',function(){const buttons=document.querySelectorAll('.btn-image');const tbody=document.getElementById('application-access-table-body');if(!tbody)return;const selectApp=(btn)=>{buttons.forEach(b=>b.classList.remove('active'));btn.classList.add('active');const app=btn.querySelector('img').alt.toLowerCase();tbody.innerHTML='<tr><td colspan="3" class="text-center">Loading...</td></tr>';fetch(`/get-application-data?app=${app}`).then(r=>r.json()).then(data=>{tbody.innerHTML='';(data.data||[]).forEach(emp=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${emp.emp_code}</td><td>${emp.first_name} ${emp.last_name}</td><td>${emp.business_email}</td>`;tbody.appendChild(tr);});}).catch(()=>{tbody.innerHTML='<tr><td colspan="3" class="text-danger text-center">Error loading</td></tr>';});};
-buttons.forEach(b=>b.addEventListener('click',()=>selectApp(b)));const def=document.querySelector('.btn-image.active')||buttons[0];if(def)selectApp(def);});
-
-// Search filtering (generic)
-document.addEventListener('DOMContentLoaded',function(){document.querySelectorAll('.modern-search-box input').forEach(inp=>{inp.addEventListener('input',function(){const targetId=this.getAttribute('data-table-id');const table=document.getElementById(targetId);if(!table)return;const rows=table.querySelectorAll('tbody tr');const f=this.value.toLowerCase();rows.forEach(r=>{const cells=[...r.querySelectorAll('td')];const match=cells.some(c=>c.textContent.toLowerCase().includes(f));r.style.display=match?'':'none';});});});});
-
-// Access Request actions (admin)
-document.addEventListener('DOMContentLoaded',function(){document.querySelectorAll('.btn-action').forEach(btn=>{btn.addEventListener('click',function(){const row=this.closest('.request-item');if(!row)return;const eventId=row.dataset.eventId;const action=this.dataset.action;fetch('/action/update-event-status/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({event_id:eventId,action})}).then(r=>r.json()).then(d=>{if(d.success){row.style.transition='opacity .5s';row.style.opacity=0;setTimeout(()=>row.remove(),500);}else{alert('Failed: '+(d.error||'Unknown'));}}).catch(()=>alert('Network error'));});});});
+// Action handling (delegated alternative to partial duplication)
+document.addEventListener('click',function(e){const btn=e.target.closest('.btn-app-owner-action');if(!btn)return;const item=btn.closest('.request-item');const eventId=item?.dataset.eventId;const action=btn.dataset.appOwnerAction||btn.getAttribute('data-app-owner-action');if(!eventId||!action)return;fetch('/update_application_request_status/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({event_id:eventId,action})}).then(r=>r.json()).then(d=>{if(d.success){item.style.transition='opacity .5s';item.style.opacity=0;setTimeout(()=>item.remove(),500);}else alert('Failed: '+(d.error||'Unknown'));}).catch(()=>alert('Network error'));});
 </script>
 {% endblock %}
