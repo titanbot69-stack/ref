@@ -1,23 +1,103 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Application Owner Dashboard{% endblock %}
+{% block title %}RA Dashboard{% endblock %}
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-<h2 class="mb-3">Application Owner Dashboard</h2>
+<!-- Roles Modal -->
+<div class="modal fade" id="rolesModal" tabindex="-1" aria-hidden="true">
+	<div class="modal-dialog"><div class="modal-content">
+		<div class="modal-header"><h5 class="modal-title">Application Roles</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+		<div class="modal-body"><div id="roles-list-container"></div></div>
+		<div class="modal-footer"><button class="btn btn-primary" style="background:#ff512f;border-color:#ff512f" data-bs-dismiss="modal">Close</button></div>
+	</div></div>
+</div>
+<h2 class="mb-3">RA Dashboard</h2>
 <ul class="nav nav-tabs" role="tablist">
-	<li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#application-requests" type="button">Application Requests</button></li>
+	<li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#ra-emp" type="button">Employee Details</button></li>
+	<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ra-access" type="button">User Access</button></li>
+	<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#revoke" type="button">Revoke Access</button></li>
+	<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#recertify" type="button">Recertification</button></li>
 </ul>
 <div class="tab-content p-3 border border-top-0 card-like">
-	<div class="tab-pane fade show active" id="application-requests">
-		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="app-owner-requests-table-container" placeholder="Search..."></div>
-		<div id="app-owner-requests-table-container">{% include 'partials/ra_application_owner_request.html' %}</div>
+	<div class="tab-pane fade show active" id="ra-emp">
+		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="ra-emp" placeholder="Search..."></div>
+		<div class="table-responsive"><div class="mh-50vh">
+			<table class="table table-sm table-striped" id="ra-emp">
+				<thead><tr><th>Emp Code</th><th>Name</th><th>Entity</th><th>Status</th><th>Email</th></tr></thead>
+				<tbody>
+				{% for h in my_rows %}
+					<tr>
+						<td>{{ h.emp_code }}</td>
+						<td>{{ h.first_name }} {{ h.last_name }}</td>
+						<td>{{ h.entity_name }}</td>
+						<td>{% if h.employee_status == 'A' %}<span class="chip chip-active">Active</span>{% else %}<span class="chip chip-inactive">Inactive</span>{% endif %}</td>
+						<td>{{ h.business_email }}</td>
+					</tr>
+				{% empty %}<tr><td colspan="5" class="text-center">No employees</td></tr>{% endfor %}
+				</tbody>
+			</table>
+		</div></div>
+	</div>
+	<div class="tab-pane fade" id="ra-access">
+		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="ra-user-access-table-container" placeholder="Search..."></div>
+		<div id="ra-user-access-table-container">{% include 'partials/ra_user_access_table.html' %}</div>
+	</div>
+	<div class="tab-pane fade" id="revoke">
+		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="revoke" placeholder="Search..."></div>
+		<div class="mh-50vh"><table class="table table-sm table-striped align-middle" id="revoke">
+			<thead><tr><th>Emp Code</th><th>Name</th><th>Email</th><th>Action</th></tr></thead>
+			<tbody>
+			{% for h in active_rows %}
+				<tr>
+					<td>{{ h.emp_code }}</td><td>{{ h.first_name }} {{ h.last_name }}</td><td>{{ h.business_email }}</td>
+					<td><button class="btn btn-sm btn-outline-danger" style="border-color:#ff512f;color:#ff512f" data-bs-toggle="modal" data-bs-target="#revokeModal" data-emp="{{ h.emp_code }}" data-email="{{ h.business_email }}">Revoke</button></td>
+				</tr>
+			{% empty %}<tr><td colspan="4" class="text-center">No active employees</td></tr>{% endfor %}
+			</tbody>
+		</table></div>
+	</div>
+	<div class="tab-pane fade" id="recertify">
+		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="recertify" placeholder="Search..."></div>
+		<div class="mh-50vh"><table class="table table-sm table-striped" id="recertify">
+			<thead><tr><th>Emp Code</th><th>Name</th><th>Entity</th><th>Status</th><th>Email</th><th>Action</th></tr></thead>
+			<tbody>
+			{% for h in active_rows %}
+				<tr>
+					<td>{{ h.emp_code }}</td><td>{{ h.first_name }} {{ h.last_name }}</td><td>{{ h.entity_name }}</td>
+					<td>{% if h.employee_status == 'A' %}<span class="chip chip-active">Active</span>{% else %}<span class="chip chip-inactive">Inactive</span>{% endif %}</td>
+					<td>{{ h.business_email }}</td>
+					<td><button class="btn btn-sm btn-outline-primary" style="border-color:#ff512f;color:#ff512f">Recertify</button></td>
+				</tr>
+			{% empty %}<tr><td colspan="6" class="text-center">No recertification required</td></tr>{% endfor %}
+			</tbody>
+		</table></div>
 	</div>
 </div>
+
+<!-- Revoke Modal -->
+<div class="modal fade" id="revokeModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog"><div class="modal-content">
+	<div class="modal-header"><h5 class="modal-title">Revoke Access</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+	<div class="modal-body"><form id="revokeForm">
+		<input type="hidden" name="hrms_id" id="rev-emp" />
+		<input type="hidden" name="ra_email" value="{{ user_email }}" />
+		<div class="mb-2">User Email: <span id="rev-email"></span></div>
+		<table class="table table-sm"><thead><tr><th>Service</th><th>Has Access</th></tr></thead><tbody>
+			<tr><td>rpulse</td><td><input type="checkbox" name="rpulse" id="chk-rpulse" /></td></tr>
+			<tr><td>dre</td><td><input type="checkbox" name="dre" id="chk-dre" /></td></tr>
+			<tr><td>ingenious</td><td><input type="checkbox" name="ingenious" id="chk-ingenious" /></td></tr>
+			<tr><td>exponentia</td><td><input type="checkbox" name="exponentia" id="chk-exponentia" /></td></tr>
+			<tr><td>neo</td><td><input type="checkbox" name="neo" id="chk-neo" /></td></tr>
+			<tr><td>dlp</td><td><input type="checkbox" name="dlp" id="chk-dlp" /></td></tr>
+		</tbody></table>
+	</form></div>
+	<div class="modal-footer"><button class="btn btn-primary" style="background:#ff512f;border-color:#ff512f" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger" id="rev-submit">Submit</button></div>
+</div></div></div>
 {% endblock %}
 
 {% block scripts %}
 {{ block.super }}
 <style>
+/* In case dashboard.css didn't load or is cached stale, ensure search box styles present */
 .modern-search-box{position:relative;margin-bottom:10px;width:300px;float:right;}
 .modern-search-box input{width:100%;padding:8px 30px;border:1px solid #ddd;border-radius:20px;box-shadow:0 2px 4px rgba(0,0,0,.1);font-size:14px;transition:all .3s ease;}
 .modern-search-box input:focus{border-color:#ff512f;box-shadow:0 4px 8px rgba(0,0,0,.15);outline:none;}
@@ -26,10 +106,17 @@
 <script>
 function getCookie(name){let v=null;if(document.cookie&&document.cookie!==''){const cs=document.cookie.split(';');for(let i=0;i<cs.length;i++){const c=cs[i].trim();if(c.substring(0,name.length+1)===(name+'=')){v=decodeURIComponent(c.substring(name.length+1));break;}}}return v;}
 
-// Local search (delegated because partial already ships JS, but we consolidate here for future DRY)
-document.addEventListener('DOMContentLoaded',function(){document.querySelectorAll('.modern-search-box input').forEach(inp=>{inp.addEventListener('input',function(){const id=this.getAttribute('data-table-id');const container=document.getElementById(id);if(!container)return;const items=container.querySelectorAll('.request-item');const f=this.value.toLowerCase();items.forEach(it=>{const search=it.getAttribute('data-searchable')?.toLowerCase()||'';it.style.display=search.includes(f)?'':'none';});});});});
+// Roles modal
+document.addEventListener('DOMContentLoaded',function(){document.body.addEventListener('click',function(e){const btn=e.target.closest('.eye-btn');if(btn&&!btn.disabled){const roles=btn.getAttribute('data-roles')||'';const app=btn.getAttribute('data-app')||'';const emp=btn.getAttribute('data-emp')||'';const modal=new bootstrap.Modal(document.getElementById('rolesModal'));const c=document.getElementById('roles-list-container');const list=roles?roles.split(',').map(r=>r.trim()).filter(Boolean):[];c.innerHTML=`<div class="mb-2"><strong>Employee:</strong> ${emp}</div><div class="mb-2"><strong>Application:</strong> ${app.toUpperCase()}</div>`+(list.length?`<ul class="list-group">${list.map(r=>`<li class=\"list-group-item\">${r}</li>`).join('')}</ul>`:'<div class="text-muted">No roles found.</div>');modal.show();}});});
 
-// Action handling (delegated alternative to partial duplication)
-document.addEventListener('click',function(e){const btn=e.target.closest('.btn-app-owner-action');if(!btn)return;const item=btn.closest('.request-item');const eventId=item?.dataset.eventId;const action=btn.dataset.appOwnerAction||btn.getAttribute('data-app-owner-action');if(!eventId||!action)return;fetch('/update_application_request_status/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({event_id:eventId,action})}).then(r=>r.json()).then(d=>{if(d.success){item.style.transition='opacity .5s';item.style.opacity=0;setTimeout(()=>item.remove(),500);}else alert('Failed: '+(d.error||'Unknown'));}).catch(()=>alert('Network error'));});
+// RA user access pagination
+function bindRaAccess(){document.querySelectorAll('.ra-access-page-link').forEach(l=>{l.addEventListener('click',e=>{e.preventDefault();const url='/ajax/ra-user-access-table/'+l.getAttribute('href');const c=document.getElementById('ra-user-access-table-container');if(!c)return;c.innerHTML='<div class="text-center py-4">Loading...</div>';fetch(url).then(r=>r.text()).then(h=>{c.innerHTML=h;bindRaAccess();});});});}
+bindRaAccess();
+
+// Revoke modal population
+document.addEventListener('DOMContentLoaded',function(){const modal=document.getElementById('revokeModal');if(!modal)return;modal.addEventListener('show.bs.modal',async ev=>{const btn=ev.relatedTarget;const emp=btn.getAttribute('data-emp');const email=btn.getAttribute('data-email');document.getElementById('rev-emp').value=emp;document.getElementById('rev-email').textContent=email;const res=await fetch(`/api/hrms/${emp}/presence/`);const data=await res.json();const p=data.presence||{};['rpulse','dre','ingenious','exponentia','neo','dlp'].forEach(k=>{const el=document.getElementById('chk-'+k);if(el)el.checked=!!p[k];});});document.getElementById('rev-submit').addEventListener('click',async()=>{const fd=new FormData(document.getElementById('revokeForm'));['rpulse','dre','ingenious','exponentia','neo','dlp'].forEach(k=>fd.set(k,document.getElementById('chk-'+k).checked?'true':'false'));const res=await fetch('/action/revoke-access/',{method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken')},body:fd});if(res.ok){bootstrap.Modal.getInstance(modal).hide();alert('Submitted');}else alert('Error submitting');});});
+
+// Search filtering
+document.addEventListener('DOMContentLoaded',function(){document.querySelectorAll('.modern-search-box input').forEach(inp=>{inp.addEventListener('input',function(){const id=this.getAttribute('data-table-id');const table=document.getElementById(id);if(!table)return;const rows=table.querySelectorAll('tbody tr');const f=this.value.toLowerCase();rows.forEach(r=>{const cells=[...r.querySelectorAll('td')];r.style.display=cells.some(c=>c.textContent.toLowerCase().includes(f))?'':'none';});});});});
 </script>
 {% endblock %}
