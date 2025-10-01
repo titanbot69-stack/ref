@@ -1,111 +1,112 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Swadhikaar • Login{% endblock %}
+{% block title %}My Workspace • Swadhikaar{% endblock %}
+
 {% block content %}
-  <link rel="stylesheet" href="{% static 'css/login.css' %}">
-  <style>
-    /* Login page layout overrides */
-  .main-content { max-width:100%!important; padding:0!important; margin:0!important; flex:1 1 auto; display:block; height:auto; }
-    body, .wrapper { min-height:100vh; }
-  </style>
-  <div class="swadhikaar-login login-full-bleed">
-    <div class="visual-pane">
-      <div class="visual-bg" style="background-image:url('{% static 'images/bg3.jpeg' %}');"></div>
-      <div class="visual-gradient"></div>
-      <div class="wave-wrapper">
-        <svg class="wave-svg" viewBox="0 0 1440 600" preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#0c44b8"/>
-              <stop offset="50%" stop-color="#ff7c26"/>
-              <stop offset="100%" stop-color="#fca937"/>
-            </linearGradient>
-            <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
-              <feGaussianBlur stdDeviation="18" result="coloredBlur"/>
-              <feMerge>
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-          </defs>
-          <path class="wave-path" fill="none" stroke="url(#waveGrad)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"
-                d="M0 360 Q180 300 360 360 T720 360 T1080 360 T1440 360" />
-          <path class="wave-path2" fill="none" stroke="url(#waveGrad)" stroke-width="2" stroke-dasharray="6 14"
-                d="M0 330 Q180 270 360 330 T720 330 T1080 330 T1440 330" />
-        </svg>
-      </div>
-      <div class="visual-copy">
-        <div class="swadhikaar-logo-badge mb-4">
-          <img src="{% static 'images/swadhikaar.jpeg' %}" alt="Swadhikaar" class="swadhikaar-logo-img" />
-        </div>
-        <h1 class="brand-name">Swadhikaar</h1>
-        <p class="tagline">Empower access. Enable identity. Elevate trust.</p>
-        <ul class="key-points">
-          <li><i class="bi bi-lightning-charge"></i> Instant Provisioning</li>
-          <li><i class="bi bi-shield-check"></i> Adaptive Security</li>
-          <li><i class="bi bi-diagram-3"></i> Intelligent Roles</li>
-        </ul>
-      </div>
-    </div>
-    <div class="auth-pane">
-      <div class="auth-blob" aria-hidden="true"></div>
-      <div class="auth-card">
-        <div class="solid-bg-layer" aria-hidden="true"></div>
-        <div class="mini-logo mb-4 text-center">
-          <img src="{% static 'images/Nido.png' %}" alt="Swadhikaar" height="56" />
-        </div>
-        <h2 class="mb-1 fw-semibold heading">Welcome Back</h2>
-        <p class="text-muted mb-4 subheading">Login to continue to <strong>Swadhikaar</strong></p>
-        {% if error %}<div class="alert alert-danger py-2 px-3 small rounded-3">{{ error }}</div>{% endif %}
-        <form method="post" class="sw-login-form" novalidate>
-          {% csrf_token %}
-          <input type="hidden" name="next" value="{{ next|default:'/dashboard/' }}" />
-          <div class="form-group mb-3">
-            <label for="email" class="form-label">Work Email</label>
-            <input id="email" class="form-control form-control-lg" type="email" name="email" placeholder="you@company.com" required autocomplete="email" />
-          </div>
-          <div class="form-group mb-4 position-relative">
-            <label for="bypass" class="form-label d-flex justify-content-between align-items-center">Bypass (First Name)
-              <span class="text-muted small">Temporary</span>
-            </label>
-            <input id="bypass" class="form-control form-control-lg" type="text" name="first_name" placeholder="Your first name" autocomplete="off" />
-          </div>
-          <div class="d-grid gap-3">
-            <button class="btn btn-sw-primary btn-lg py-2" type="submit">
-              <span>Login (Bypass)</span> <i class="bi bi-arrow-right ms-2"></i>
-            </button>
-            <a class="btn btn-outline-sw btn-lg py-2" href="/auth/azure/login/">
-              <i class="bi bi-windows me-2"></i> Azure SSO
-            </a>
-          </div>
-        </form>
-        <div class="mt-4 d-flex justify-content-between small aux-links">
-          <a href="#">Need help?</a>
-          <a href="#">Privacy</a>
-        </div>
-        <div class="copy-footer small text-muted mt-5">© {{ now|date:'Y' }} Swadhikaar. All rights reserved.</div>
-      </div>
-    </div>
+<link rel="stylesheet" href="{% static 'css/my_workspace.css' %}">
+
+<div class="workspace-panel">
+  <div class="workspace-hero">
+    <h1 class="wh-title">My Workspace</h1>
+    <p class="wh-tag">Unified access to your Swadhikaar dashboards & roles</p>
   </div>
+  <div class="panel-scroll">
+    <div class="tile-grid">
+      {% for t in tiles %}
+        <a class="ws-tile ws-{{ t.key }}" href="{{ t.href }}" aria-label="{{ t.title }}">
+          <div class="tile-icon"><i class="bi bi-{{ t.icon }}"></i></div>
+          <div class="tile-body">
+            <h3 class="tile-title">{{ t.title }}</h3>
+            <p class="tile-sub">{{ t.subtitle }}</p>
+          </div>
+          <div class="tile-arrow"><i class="bi bi-arrow-right-circle"></i></div>
+        </a>
+      {% endfor %}
+    </div>
+    <div class="workspace-footer">© {{ year }} NIDO Solutions. All rights reserved.</div>
+  </div>
+</div>
+{% block scripts %}{{ block.super }}{% endblock %}
 {% endblock %}
 
-{% block scripts %}
-  {{ block.super }}
-  <script>
-    // Subtle wave animation using requestAnimationFrame to adjust quadratic control points
-    (function(){
-      const p1 = document.querySelector('.wave-path');
-      const p2 = document.querySelector('.wave-path2');
-      if(!p1||!p2) return;
-      let t=0; function anim(){
-        t+=0.015; const amp=40; const amp2=28;
-        const yBase1=360; const yBase2=330;
-        const c1 = yBase1 - Math.sin(t)*amp;
-        const c2 = yBase2 - Math.cos(t*1.15)*amp2;
-        p1.setAttribute('d',`M0 ${yBase1} Q180 ${c1} 360 ${yBase1} T720 ${yBase1} T1080 ${yBase1} T1440 ${yBase1}`);
-        p2.setAttribute('d',`M0 ${yBase2} Q180 ${c2} 360 ${yBase2} T720 ${yBase2} T1080 ${yBase2} T1440 ${yBase2}`);
-        requestAnimationFrame(anim);
-      } requestAnimationFrame(anim);
-    })();
-  </script>
-{% endblock %}
+
+/* Full-height workspace: only 5px vertical padding between header and bottom at any viewport size */
+:root{--panel-bg:linear-gradient(180deg,#f2f4f8 0%,#e9eef4 55%,#dce3ec 100%);--tile-radius:22px;--tile-shadow:0 8px 26px -12px rgba(41,57,79,.2);--tile-border:1px solid #e3e9ef;--grad-admin:linear-gradient(135deg,#1d60e8,#3b82f6);--grad-ra:linear-gradient(135deg,#6366f1,#7c3aed);--grad-app:linear-gradient(135deg,#0d9488,#14b8a6);--grad-prof:linear-gradient(135deg,#9333ea,#c026d3)}
+/* Override base padding – keep only 5px vertical gap overall */
+.main-content{display:flex;flex-direction:column;padding:5px 14px !important;gap:0;}
+.main-content > .workspace-panel{flex:1 1 auto;min-height:0;}
+.workspace-panel{position:relative;margin:0;padding:0 18px 0 18px;background:var(--panel-bg);display:flex;flex-direction:column;flex:1 1 auto;min-height:0;height:100%;overflow:auto;border-radius:34px;box-shadow:0 10px 28px -14px rgba(24,36,54,.28);background-clip:padding-box}
+.workspace-hero{text-align:center;margin:0 0 1.6rem;padding-top:4px}
+.wh-title{margin:0;font-size:clamp(2.3rem,4vw,3.1rem);font-weight:700;letter-spacing:.6px;background:linear-gradient(90deg,#1e293b,#334155);-webkit-background-clip:text;background-clip:text;color:transparent}
+.wh-tag{margin:.5rem 0 0;font-size:.95rem;font-weight:500;color:#506078;letter-spacing:.3px}
+.panel-scroll{flex:1 1 auto;min-height:0;overflow:auto;display:flex;flex-direction:column;scrollbar-width:thin}
+.panel-scroll::-webkit-scrollbar{width:10px}
+.panel-scroll::-webkit-scrollbar-thumb{background:#d1d8e2;border-radius:20px;border:2px solid #f5f7fa}
+.tile-grid{display:grid;gap:2rem;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin:0 auto 1.2rem;max-width:1700px;width:100%}
+.ws-tile{position:relative;display:flex;flex-direction:column;justify-content:space-between;text-decoration:none;background:#ffffff;border:var(--tile-border);border-radius:var(--tile-radius);padding:1.35rem 1.35rem 1.55rem;min-height:170px;box-shadow:var(--tile-shadow);transition:.55s cubic-bezier(.83,0,.17,1);overflow:hidden}
+.ws-tile:after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0),rgba(255,255,255,.9));opacity:0;transition:.55s}
+.ws-tile:hover{transform:translateY(-6px);box-shadow:0 18px 46px -16px rgba(41,57,79,.28)}
+.ws-tile:hover:after{opacity:.55}
+.tile-icon{width:56px;height:56px;border-radius:18px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.55rem;box-shadow:0 10px 24px -10px rgba(41,57,79,.35);margin-bottom:.9rem}
+.ws-admin .tile-icon{background:var(--grad-admin)}
+.ws-ra .tile-icon{background:var(--grad-ra)}
+.ws-app-owner .tile-icon{background:var(--grad-app)}
+.ws-profile .tile-icon{background:var(--grad-prof)}
+.tile-title{font-size:1.05rem;font-weight:600;margin:0 0 .5rem;color:#1e293b;letter-spacing:.3px}
+.tile-sub{margin:0;font-size:.74rem;font-weight:500;color:#5a6678;letter-spacing:.25px;line-height:1.2}
+.tile-arrow{position:absolute;bottom:16px;right:18px;color:#5b6f84;font-size:1.15rem;opacity:.85;transition:.45s}
+.ws-tile:hover .tile-arrow{transform:translateX(4px);color:#1e293b}
+.workspace-footer{text-align:center;font-size:.65rem;opacity:.65;margin-top:auto;margin-bottom:4px;color:#5d6a7a;letter-spacing:.55px}
+@media (max-width:1100px){.tile-grid{gap:1.5rem}}
+@media (max-width:780px){.workspace-panel{padding:0 12px}.tile-grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}}
+@media (max-width:600px){.workspace-panel{padding:0 8px}.wh-title{font-size:2.15rem}.tile-grid{grid-template-columns:repeat(auto-fit,minmax(100%,1fr))}.ws-tile{min-height:160px}.tile-icon{width:52px;height:52px;font-size:1.4rem}}
+/* All vertical spacing strictly controlled above (5px top + 5px bottom via main-content padding) */
+
+
+
+path('my-workspace/', views.my_workspace, name='my-workspace'),
+
+
+@login_required
+def my_workspace(request):
+    """Simple workspace landing page with static tiles. Role logic will come later."""
+    user = request.user
+    first_name = user.first_name or (user.get_full_name().split(' ')[0] if user.get_full_name() else '')
+    email = user.email or ''
+    tiles = [
+        {
+            'key': 'admin',
+            'title': 'Admin Dashboard',
+            'subtitle': 'System-wide administration',
+            'icon': 'shield-lock',
+            'href': '/dashboard/?tab=admin'
+        },
+        {
+            'key': 'ra',
+            'title': 'RA Dashboard',
+            'subtitle': 'Review supervised users',
+            'icon': 'people',
+            'href': '/dashboard/?tab=ra'
+        },
+        {
+            'key': 'app-owner',
+            'title': 'Application Owner',
+            'subtitle': 'Manage application access',
+            'icon': 'boxes',
+            'href': '/dashboard/?tab=applications'
+        },
+        {
+            'key': 'profile',
+            'title': 'My Profile & Access',
+            'subtitle': 'View personal roles & presence',
+            'icon': 'person-badge',
+            'href': '/dashboard/?tab=my-access'
+        },
+    ]
+    context = {
+        'first_name': first_name,
+        'user_email': email,
+        'tiles': tiles,
+        'year': datetime.now().year,
+    }
+    return render(request, 'my_workspace.html', context)
