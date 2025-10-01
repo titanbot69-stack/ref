@@ -1,15 +1,15 @@
-    path('logout/', views.logout_view, name='logout'),  # POST only
-    path('my-workspace/', views.my_workspace, name='my-workspace'),
+    email = (user.email or '').lower()
 
+    # Determine roles
+    # Admin rule: external_designation == 'Chief Technology Officer' OR legacy hard-coded admin email
+    hrms_rows = get_hrms_list()
+    hrms_row = next((r for r in hrms_rows if (r.get('business_email') or '').lower() == email), None)
+    external_designation = (hrms_row or {}).get('external_designation', '') or ''
+    is_admin = email == 'admin@test.com' or external_designation == 'Chief Technology Officer'
+    is_ra = email in {ra.lower() for ra in RA_EMAILS}
+    app_owner_emails = {o['email_id'].lower() for o in application_owners}
+    is_app_owner = email in app_owner_emails
 
-    # Dedicated role dashboards
-    path('dashboard/admin/', views.admin_dashboard, name='admin-dashboard'),
-    path('dashboard/ra/', views.ra_dashboard, name='ra-dashboard'),
-    path('dashboard/app-owner/', views.application_owner_dashboard, name='application-owner-dashboard'),
-
-
-    path('action/update-event-status/', views.update_event_status, name='update-event-status'),
-
-
-    path('get-application-data/', views.get_application_data, name='get-application-data'),
-    path('update_application_request_status/', views.update_application_request_status, name='update-application-request-status'),
+    tiles = []
+    if is_admin:
+        tiles.append({
