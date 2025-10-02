@@ -1,2 +1,4 @@
-        // Only handle read more/less toggling here; search handled globally
-        document.querySelectorAll('#access-requests-table-container .toggle-description').forEach(link => {
+                const isShortHidden = shortDesc.style.display === 'none';
+                shortDesc.style.display = isShortHidden ? '' : 'none';
+                fullDesc.style.display = isShortHidden ? 'none' : '';
+                this.textContent = isShortHidden ? 'Read More' : 'Read Less';
