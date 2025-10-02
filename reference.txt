@@ -1,28 +1,132 @@
-    """Initiate a recertification request.
-
-    Supports both traditional navigation (redirect) and AJAX (JSON) POST.
-    """
-    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-    # Accept POST for creation; GET can be deprecated later but kept for backward compatibility
-    if request.method not in ['GET', 'POST']:
-        return HttpResponseBadRequest('Unsupported method')
+					<td><button class="btn btn-sm btn-outline-primary btn-recertify" data-emp="{{ h.emp_code }}" data-email="{{ h.business_email }}" style="border-color:#ff512f;color:#ff512f">Recertify</button></td>
 
 
+			</div>
+		</div>
+	</div>
+</div>
+
+		<!-- Recertify Confirmation Modal -->
+		<div class="modal fade" id="recertifyConfirmModal" tabindex="-1" aria-labelledby="recertifyModalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-dialog-centered modal-sm modal-recert">
+				<div class="modal-content shadow-lg border-0">
+					<div class="modal-header gradient-header py-2">
+						<h6 class="modal-title d-flex align-items-center mb-0" id="recertifyModalLabel">
+							<i class="fas fa-sync-alt me-2"></i>Confirm Recertification
+						</h6>
+						<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body py-3">
+						<div class="info-box mb-3">
+							<div class="d-flex align-items-start">
+								<div class="icon-wrap me-2"><i class="fas fa-user-shield"></i></div>
+								<div class="flex-grow-1 small lh-sm">
+									<strong>Recertification</strong> triggers a review sequence (CTO → CISO (if required) → Application Owner).
+									The employee's current access posture will be revalidated.
+								</div>
+							</div>
+						</div>
+						<ul class="list-unstyled small mb-3 recert-meta">
+							<li><span class="text-muted">Employee Code:</span> <span id="recert-emp-code" class="fw-semibold"></span></li>
+							<li><span class="text-muted">Email:</span> <span id="recert-emp-email" class="fw-semibold"></span></li>
+						</ul>
+						<div class="form-check mb-1">
+							<input class="form-check-input" type="checkbox" id="ack-recert-box">
+							<label class="form-check-label small" for="ack-recert-box">I confirm this recertification is necessary.</label>
+						</div>
+						<div class="small text-muted">This action is logged and cannot be undone (you may re-initiate later if needed).</div>
+					</div>
+					<div class="modal-footer py-2 gap-2 flex-nowrap">
+						<button type="button" class="btn btn-light btn-sm border" data-bs-dismiss="modal">Cancel</button>
+						<button type="button" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2" id="confirm-recert-btn" disabled>
+							<span class="spinner-border spinner-border-sm d-none" id="recert-spinner" role="status" aria-hidden="true"></span>
+							<span class="btn-text">Start Recertification</span>
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
 
 
-        return JsonResponse({'success': False, 'error': 'Employee not found'}, status=404) if is_ajax else redirect('dashboard')
 
 
-        return JsonResponse({'success': False, 'error': 'Not authorized'}, status=403) if is_ajax else HttpResponseForbidden('Not allowed')
+/* Recert modal enhancements */
+.modal-recert .modal-content{border-radius:10px;overflow:hidden;}
+.gradient-header{background:linear-gradient(90deg,#ff8c1a,#ff512f);color:#fff;}
+.gradient-header .btn-close{filter:invert(1) brightness(200%);}
+.info-box{background:#fff8f2;border:1px solid #ffd8c2;border-radius:8px;padding:.6rem .75rem;}
+.info-box .icon-wrap{width:30px;height:30px;border-radius:6px;background:#ffebe0;display:flex;align-items:center;justify-content:center;color:#ff6b2e;}
+.recert-meta li+li{margin-top:2px;}
+#toast-holder .alert{animation:fadeSlide .4s ease;}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
 
 
-        if is_ajax:
-            return JsonResponse({'success': True, 'event_id': event_id, 'message': 'Recertification initiated'})
 
 
-        logger.error(f"Recertify failed: {e}")
 
-                [event_id, 'Certification Request Failed', request.user.email or '', timezone.now(), 'FAILED']
-            )
-        if is_ajax:
-            return JsonResponse({'success': False, 'error': 'Recertification failed'})
+// Recertify action buttons (AJAX + modal)
+document.addEventListener('DOMContentLoaded',function(){
+	const recertModalEl = document.getElementById('recertifyConfirmModal');
+	if(!recertModalEl) return;
+	const empSpan = document.getElementById('recert-emp-code');
+	const emailSpan = document.getElementById('recert-emp-email');
+	const confirmBtn = document.getElementById('confirm-recert-btn');
+	const ackBox = document.getElementById('ack-recert-box');
+		const spinner = document.getElementById('recert-spinner');
+		const btnText = confirmBtn?.querySelector('.btn-text');
+	let targetEmp = null; let targetRow = null; let targetEmail = null;
+	const bsRecert = new bootstrap.Modal(recertModalEl);
+
+	function showToast(msg,type='success'){
+		let holder = document.getElementById('toast-holder');
+		if(!holder){
+			holder = document.createElement('div');
+			holder.id='toast-holder';
+			holder.style.position='fixed';
+			holder.style.top='70px';
+			holder.style.right='20px';
+			holder.style.zIndex='1080';
+			document.body.appendChild(holder);
+		}
+		const alert=document.createElement('div');
+		alert.className='alert alert-'+(type==='error'?'danger':type)+' shadow-sm py-2 px-3 mb-2';
+		alert.textContent=msg;
+		holder.appendChild(alert);
+		setTimeout(()=>alert.remove(),3500);
+	}
+
+	ackBox && ackBox.addEventListener('change',()=>{confirmBtn.disabled=!ackBox.checked;});
+
+	document.querySelectorAll('.btn-recertify').forEach(btn=>{
+		btn.addEventListener('click',function(){
+			targetEmp = this.getAttribute('data-emp');
+			targetEmail = this.getAttribute('data-email');
+			targetRow = this.closest('tr');
+			ackBox.checked=false; confirmBtn.disabled=true;
+			empSpan.textContent=targetEmp||''; emailSpan.textContent=targetEmail||'';
+			bsRecert.show();
+		});
+	});
+
+		recertModalEl.addEventListener('shown.bs.modal',()=>{ackBox?.focus();});
+
+		confirmBtn && confirmBtn.addEventListener('click',function(){
+		if(!targetEmp) return;
+			confirmBtn.disabled=true; spinner.classList.remove('d-none'); btnText.textContent='Working...';
+		fetch('/action/recertify/'+targetEmp+'/',{
+			method:'POST',
+			headers:{'X-CSRFToken':getCookie('csrftoken'),'X-Requested-With':'XMLHttpRequest'}
+		}).then(r=>r.json()).then(d=>{
+			if(d.success){
+				// disable button in row
+				const btn = targetRow?.querySelector('.btn-recertify');
+				if(btn){btn.textContent='Requested';btn.disabled=true;btn.classList.remove('btn-outline-primary');btn.classList.add('btn-secondary');}
+				showToast('Recertification initiated successfully');
+				bsRecert.hide();
+			}else{
+				showToast(d.error||'Recertification failed','error');
+			}
+			}).catch(()=>showToast('Network error','error')).finally(()=>{btnText.textContent='Start Recertification';spinner.classList.add('d-none');confirmBtn.disabled=false;targetEmp=null;});
+	});
+});
+
