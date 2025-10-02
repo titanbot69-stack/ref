@@ -1,19 +1,22 @@
-						<td class="desc-cell" style="width:280px;max-width:280px;">
+						<td class="desc-cell">
 							<div class="desc-wrapper" data-state="collapsed">
-								<div class="desc-short">{{ ev.event_description|truncatechars:120 }}</div>
-								<div class="desc-full d-none">{{ ev.event_description }}</div>
-								<a href="#" class="desc-toggle small">Read More</a>
+								<div class="desc-short" title="{{ ev.event_description }}">{{ ev.event_description }}</div>
+								<div class="desc-full">{{ ev.event_description }}</div>
+								<a href="#" class="desc-toggle small" aria-expanded="false">Read More</a>
 							</div>
 						</td>
 
 
 /* My Requests description column */
-#my-requests-table .desc-cell{vertical-align:top;}
+#my-requests-table .desc-cell{vertical-align:top;max-width:280px;width:280px;}
 #my-requests-table .desc-wrapper{position:relative;}
-#my-requests-table .desc-short{overflow:hidden;}
-#my-requests-table .desc-full{white-space:normal;}
+#my-requests-table .desc-short{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%;}
+#my-requests-table .desc-full{display:none;overflow:hidden;word-wrap:break-word;white-space:normal;}
+#my-requests-table .desc-wrapper[data-state='expanded'] .desc-short{display:none;}
+#my-requests-table .desc-wrapper[data-state='expanded'] .desc-full{display:block;}
 #my-requests-table .desc-toggle{text-decoration:none;display:inline-block;margin-top:2px;}
 #my-requests-table .desc-toggle:focus{outline:2px solid #ff8c1a;outline-offset:2px;}
+
 
 
 // My Requests description toggles
@@ -26,19 +29,9 @@ document.addEventListener('DOMContentLoaded',function(){
 		e.preventDefault();
 		const wrap=toggle.closest('.desc-wrapper');
 		if(!wrap) return;
-		const shortEl=wrap.querySelector('.desc-short');
-		const fullEl=wrap.querySelector('.desc-full');
 		const expanded = wrap.getAttribute('data-state') === 'expanded';
-		if(expanded){
-			fullEl.classList.add('d-none');
-			shortEl.classList.remove('d-none');
-			wrap.setAttribute('data-state','collapsed');
-			toggle.textContent='Read More';
-		} else {
-			shortEl.classList.add('d-none');
-			fullEl.classList.remove('d-none');
-			wrap.setAttribute('data-state','expanded');
-			toggle.textContent='Read Less';
-		}
+		wrap.setAttribute('data-state', expanded ? 'collapsed' : 'expanded');
+		toggle.textContent = expanded ? 'Read More' : 'Read Less';
+		toggle.setAttribute('aria-expanded', (!expanded).toString());
 	});
 });
