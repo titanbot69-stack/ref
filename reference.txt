@@ -1,81 +1,30 @@
-    """Stage-based workflow for Grant / Revoke access requests.
-
-    Grant flow: CTO_APPROVAL -> CISO_APPROVAL -> Application Owner -> Closed
-    Revoke flow: CTO_APPROVAL -> Application Owner -> Closed
-    Reject at any stage: eve_status = Rejected, assigned_to = rejecting actor's email.
-    """
-
-            cursor.execute(
-                """
-                SELECT event_id, event_description, assigned_to, COALESCE(eve_status,'open') AS eve_status
-                FROM event_status
-                WHERE event_id = %s
-                FOR UPDATE
-                """,
-                [event_id]
-            )
-            row = cursor.fetchone()
-            if not row:
-                return JsonResponse({'success': False, 'error': 'Event not found'}, status=404)
-            _event_id, event_description, current_assigned_to, current_eve_status = row
-
-            if current_eve_status.lower() != 'open':
-                return JsonResponse({'success': False, 'error': 'Event already closed'}, status=409)
-
-            # Determine caller roles
-            user_email = (request.user.email or '').lower()
-            hrms_rows = get_hrms_list()
-            hrms_row = next((r for r in hrms_rows if (r.get('business_email') or '').lower() == user_email), None)
-            external_designation = (hrms_row or {}).get('external_designation', '')
-            app_owner_emails = {o['email_id'].lower() for o in application_owners}
-
-            def deny(msg='Not authorized for this stage'):
-                return JsonResponse({'success': False, 'error': msg}, status=403)
-
-            # Stage authorization
-            if current_assigned_to == 'CTO_APPROVAL' and external_designation != 'Chief Technology Officer':
-                return deny()
-            if current_assigned_to == 'CISO_APPROVAL' and external_designation != 'Chief Information Security Officer':
-                return deny()
-            if current_assigned_to == 'Application Owner' and user_email not in app_owner_emails:
-                return deny()
-
-            is_grant = 'Grant Access Request' in (event_description or '')
-            is_revoke = 'Revoke Access Request' in (event_description or '')
-            if not (is_grant or is_revoke):
-                return JsonResponse({'success': False, 'error': 'Unrecognized request type'}, status=400)
-
-            next_assigned_to = current_assigned_to
-            new_status = current_eve_status
-            final = False
-
-            if action == 'reject':
-                new_status = 'Rejected'
-                next_assigned_to = user_email
-                final = True
-            else:  # accept
-                if is_grant:
-                    if current_assigned_to == 'CTO_APPROVAL':
-                        next_assigned_to = 'CISO_APPROVAL'
-                        new_status = 'open'
-                    elif current_assigned_to == 'CISO_APPROVAL':
-                        next_assigned_to = 'Application Owner'
-                        new_status = 'open'
-                    elif current_assigned_to == 'Application Owner':
-                        next_assigned_to = user_email
-                        new_status = 'Closed'
-                        final = True
-                    else:
-                        return JsonResponse({'success': False, 'error': 'Invalid stage for grant flow'}, status=400)
-                elif is_revoke:
-                    if current_assigned_to == 'CTO_APPROVAL':
-                        next_assigned_to = 'Application Owner'
-                        new_status = 'open'
-                    elif current_assigned_to == 'Application Owner':
-                        next_assigned_to = user_email
-                        new_status = 'Closed'
-                        final = True
-                    else:
-                        return JsonResponse({'success': False, 'error': 'Invalid stage for revoke flow'}, status=400)
-
-            assigned_at = timezone.now()
+	<!-- Reject Confirmation Modal HTML injection -->
+	</script>
+	<div class="modal fade" id="adminRejectConfirmModal" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header bg-danger text-white py-2">
+					<h6 class="modal-title mb-0">Confirm Rejection</h6>
+					<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<p class="mb-2">You are about to <strong class="text-danger">Reject</strong> this access request.</p>
+					<p class="small text-muted mb-1">Event ID: <span id="admin-reject-target-id" class="fw-semibold"></span></p>
+					<ul class="small text-muted mb-3 ps-3">
+						<li>This action cannot be undone.</li>
+						<li>Status will immediately change to Rejected.</li>
+						<li>A new request must be created to restart the flow.</li>
+					</ul>
+					<div class="form-check">
+						<input class="form-check-input" type="checkbox" value="1" id="admin-ack-reject-box">
+						<label class="form-check-label small" for="admin-ack-reject-box">I understand and want to proceed.</label>
+					</div>
+				</div>
+				<div class="modal-footer py-2">
+					<button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+					<button type="button" class="btn btn-danger btn-sm" id="admin-confirm-reject-btn" disabled>Reject Request</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
