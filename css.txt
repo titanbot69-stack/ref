@@ -1,31 +1,44 @@
-		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="access-requests-table-container" placeholder="Search..."></div>
+	<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#my-requests" type="button">My Requests</button></li>
 
 
-/* Scoped overrides (search styles provided globally in dashboard.css) */
-
-
-// Unified search filtering (supports tables & request-item lists)
-document.addEventListener('DOMContentLoaded',function(){
-	document.querySelectorAll('.modern-search-box input').forEach(inp=>{
-		inp.addEventListener('input',function(){
-			const id=this.getAttribute('data-table-id');
-			const container=document.getElementById(id);
-			if(!container) return;
-			let targets=[...container.querySelectorAll('tbody tr')];
-			const isTable = targets.length>0;
-			if(!isTable){
-				targets=[...container.querySelectorAll('.request-item')];
-			}
-			const f=this.value.toLowerCase();
-			targets.forEach(el=>{
-				let text;
-				if(!isTable && el.classList.contains('request-item')){
-					text=(el.getAttribute('data-searchable')||el.textContent||'').toLowerCase();
-				}else{
-					text=el.textContent.toLowerCase();
-				}
-				el.style.display=text.includes(f)?'':'none';
-			});
-		});
-	});
-});
+	<div class="tab-pane fade" id="my-requests">
+		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="my-requests-table" placeholder="Search my initiated events..."></div>
+		<div class="mh-50vh">
+			<table class="table table-sm table-striped" id="my-requests-table">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Type</th>
+						<th>Description</th>
+						<th>Triggered At</th>
+						<th>Assigned To</th>
+						<th>Assigned At</th>
+						<th>Status</th>
+					</tr>
+				</thead>
+				<tbody>
+				{% for ev in my_initiated_events %}
+					<tr>
+						<td>{{ ev.event_id }}</td>
+						<td>{{ ev.event_type }}</td>
+						<td class="text-truncate" style="max-width:280px;" title="{{ ev.event_description }}">{{ ev.event_description }}</td>
+						<td>{{ ev.triggered_at|date:'Y-m-d H:i' }}</td>
+						<td>{{ ev.assigned_to }}</td>
+						<td>{% if ev.assigned_at %}{{ ev.assigned_at|date:'Y-m-d H:i' }}{% else %}<span class="text-muted">-</span>{% endif %}</td>
+						<td>
+							{% if ev.eve_status and ev.eve_status|lower == 'closed' %}
+								<span class="badge bg-success">Closed</span>
+							{% elif ev.eve_status and ev.eve_status|lower == 'rejected' %}
+								<span class="badge bg-danger">Rejected</span>
+							{% else %}
+								<span class="badge bg-warning text-dark">Open</span>
+							{% endif %}
+						</td>
+					</tr>
+				{% empty %}
+					<tr><td colspan="7" class="text-center text-muted">No events initiated by you yet.</td></tr>
+				{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
