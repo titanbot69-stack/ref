@@ -1,3 +1,31 @@
-    /* search box styling now centralized in dashboard.css; remove local overrides */
-    .request-item{transition:box-shadow .2s, transform .15s;}
-    .request-item:hover{box-shadow:0 6px 14px rgba(0,0,0,.12);transform:translateY(-2px);}
+		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="access-requests-table-container" placeholder="Search..."></div>
+
+
+/* Scoped overrides (search styles provided globally in dashboard.css) */
+
+
+// Unified search filtering (supports tables & request-item lists)
+document.addEventListener('DOMContentLoaded',function(){
+	document.querySelectorAll('.modern-search-box input').forEach(inp=>{
+		inp.addEventListener('input',function(){
+			const id=this.getAttribute('data-table-id');
+			const container=document.getElementById(id);
+			if(!container) return;
+			let targets=[...container.querySelectorAll('tbody tr')];
+			const isTable = targets.length>0;
+			if(!isTable){
+				targets=[...container.querySelectorAll('.request-item')];
+			}
+			const f=this.value.toLowerCase();
+			targets.forEach(el=>{
+				let text;
+				if(!isTable && el.classList.contains('request-item')){
+					text=(el.getAttribute('data-searchable')||el.textContent||'').toLowerCase();
+				}else{
+					text=el.textContent.toLowerCase();
+				}
+				el.style.display=text.includes(f)?'':'none';
+			});
+		});
+	});
+});
