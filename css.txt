@@ -1,9 +1,105 @@
-	{% if is_admin or external_designation == 'Chief Technology Officer' %}
+    # Fetch last initiation timestamp (global cooldown)
+    last_initiated_at = None
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT triggered_at
+                FROM event_status
+                WHERE event_type IN ('Initiate_Certification','CERTIFICATION_INITIATED')
+                ORDER BY triggered_at DESC
+                LIMIT 1
+                """
+            )
+            row = cursor.fetchone()
+            if row:
+                last_initiated_at = row[0]
+    except Exception as e:
+        logger.error(f"Failed to read last initiation timestamp: {e}")
 
-    user_email = (request.user.email or '').lower()
-    hrms_row = next((r for r in get_hrms_list() if (r.get('business_email') or '').lower() == user_email), None)
-    external_designation = (hrms_row or {}).get('external_designation', '')
-    if not (user_email == 'admin@test.com' or external_designation == 'Chief Technology Officer'):
 
-        user_role_label = 'Admin' if user_email == 'admin@test.com' else 'CTO'
- 
+        'last_initiated_at': last_initiated_at,
+
+
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    if request.method != 'POST':
+        return HttpResponseBadRequest('POST required')
+
+
+
+        return JsonResponse({'success': False, 'error': 'Not allowed'}, status=403) if is_ajax else HttpResponseForbidden('Not allowed')
+
+    # Cooldown check (15 days) using latest event matching new or legacy type
+    fifteen_days_ago = timezone.now() - timezone.timedelta(days=15)
+    last_initiated_at = None
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT triggered_at
+                FROM event_status
+                WHERE event_type IN ('Initiate_Certification','CERTIFICATION_INITIATED')
+                ORDER BY triggered_at DESC
+                LIMIT 1
+                """
+            )
+            row = cursor.fetchone()
+            if row:
+                last_initiated_at = row[0]
+    except Exception as e:
+        logger.error(f"Cooldown lookup failed: {e}")
+
+    if last_initiated_at and last_initiated_at >= fifteen_days_ago:
+        msg = 'Certification was already initiated within the last 15 days.'
+        return JsonResponse({'success': False, 'error': msg, 'cooldown': True, 'last_initiated_at': last_initiated_at.strftime('%Y-%m-%d %H:%M:%S')}, status=409)
+
+
+
+        total_events = 0
+
+
+            # Email craft placeholder
+            _html = render(request, 'emails/initiative_certification.html', {
+                'rows': rows,
+                'ra_email': ra,
+                'initiated_by': request.user.email,
+                'ts': timezone.now()
+            }).content.decode('utf-8')
+            print(f'Initiate Certification to {ra}')
+            total_events += 1
+
+
+
+            event_description=f'Certification cycle initiated for {len(ra_emails)} RAs covering {total_events} batches.',
+
+
+                [event_id, 'Certification Initiation Emails Queued', request.user.email or '', timezone.now(), 'SENT']
+
+
+        return JsonResponse({'success': True, 'event_id': event_id, 'message': 'Certification initiation started'})
+
+
+        logger.error(f"Initiate certification failed: {e}")
+
+
+
+
+        fail_event_id = log_event(
+            event_type='Initiate_Certification_Failed',
+
+
+
+
+            event_description=f'Certification initiation failed: {str(e)}',
+
+
+
+                [fail_event_id, 'Certification Initiation Failed', request.user.email or '', timezone.now(), 'FAILED']
+
+
+
+
+
+        return JsonResponse({'success': False, 'error': 'Initiation failed'}, status=500)
+
+
