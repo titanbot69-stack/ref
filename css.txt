@@ -1,7 +1,2 @@
-dashboard.css
-.modern-search-box { position: relative; margin: 0 0 12px 0; width: 100%; max-width: 340px; }
-.modern-search-box input { width: 100%; padding: 10px 34px; border: 1px solid #d6dce2; border-radius: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.06); font-size: 14px; transition: all 0.25s ease; background:#fff; }
-.modern-search-box i { position: absolute; top: 50%; left: 12px; transform: translateY(-50%); font-size: 16px; color: #8a97a3; }
-@media (max-width: 640px){ .modern-search-box { max-width:100%; } }
-
-/* search box uses global dashboard.css styles */
+        // Only handle read more/less toggling here; search handled globally
+        document.querySelectorAll('#access-requests-table-container .toggle-description').forEach(link => {
