@@ -1,135 +1,125 @@
+    // Ensure aux link colors remain consistent (avoid white after visit)
+    document.querySelectorAll('.aux-links a').forEach(a=>{
+      a.addEventListener('focus',()=>a.classList.add('focus'));a.addEventListener('blur',()=>a.classList.remove('focus'));
+    });
+
+
+
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Help & Support • Swadhikaar{% endblock %}
+{% block title %}Privacy & Data Protection • Swadhikaar{% endblock %}
 {% block content %}
 <style>
-	:root {--accent:#ff6a2f;--accent-grad:linear-gradient(135deg,#ff6a2f,#ff9d1a);--accent-soft:#fff3ea;--card-border:#e9eef3;}
-	.fixed-page-shell {position:relative;display:flex;flex-direction:column;gap:1.2rem;}
-	.fp-container {background:#ffffff;border:1px solid var(--card-border);border-radius:28px;box-shadow:0 6px 24px -8px rgba(40,40,55,.10),0 2px 8px -2px rgba(40,40,55,.05);padding:1.75rem 1.9rem 2rem;display:flex;flex-direction:column;max-width:1400px;margin:0 auto;width:100%;height:calc(100vh - 110px); /* header ~70 + margin */}
+	:root {--accent:#ff6a2f;--accent-grad:linear-gradient(135deg,#ff6a2f,#ff9d1a);--accent-soft:#fff3ea;}
+	.fp-container {background:#ffffff;border:1px solid #e9eef3;border-radius:28px;box-shadow:0 6px 24px -8px rgba(40,40,55,.10),0 2px 8px -2px rgba(40,40,55,.05);padding:1.75rem 1.9rem 2rem;display:flex;flex-direction:column;max-width:1400px;margin:0 auto;width:100%;height:calc(100vh - 110px);} 
 	@media (max-width: 992px){ .fp-container {height:calc(100vh - 95px);padding:1.25rem 1.2rem 1.4rem;} }
-	.fp-scroll {flex:1 1 auto;overflow:auto;padding-right:.35rem;scrollbar-width:thin;}
-	.fp-scroll::-webkit-scrollbar {width:8px;} .fp-scroll::-webkit-scrollbar-track {background:transparent;} .fp-scroll::-webkit-scrollbar-thumb {background:#c5d1dc;border-radius:40px;} .fp-scroll::-webkit-scrollbar-thumb:hover {background:#b1c0cc;}
+	.fp-scroll {flex:1 1 auto;overflow:auto;padding-right:.4rem;scrollbar-width:thin;}
+	.fp-scroll::-webkit-scrollbar {width:8px;} .fp-scroll::-webkit-scrollbar-thumb {background:#c5d1dc;border-radius:40px;} .fp-scroll::-webkit-scrollbar-thumb:hover {background:#b1c0cc;}
 	.page-head {display:flex;flex-wrap:wrap;align-items:flex-start;gap:1.2rem;margin-bottom:1.1rem;}
 		.page-head h1 {font-size:1.65rem;font-weight:600;color:#1b2d42;margin:0;letter-spacing:.4px;}
-	.page-sub {font-size:.9rem;color:#4a5a6a;max-width:740px;line-height:1.4;margin-top:.2rem;}
+	.page-sub {font-size:.9rem;color:#4a5a6a;max-width:760px;line-height:1.4;margin-top:.2rem;}
 		.back-link {display:inline-flex;align-items:center;gap:.45rem;font-size:.7rem;font-weight:600;letter-spacing:.4px;padding:.45rem .85rem;border-radius:40px;background:#fff3ea;border:1px solid #ffd9c2;color:#b04410;text-decoration:none;}
 		.back-link:hover {background:#ffe9d9;}
-	.support-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-bottom:1.8rem;}
-		.s-card {background:#fff;border:1px solid #e6edf3;border-radius:18px;padding:1rem 1rem .95rem;display:flex;flex-direction:column;gap:.35rem;position:relative;box-shadow:0 2px 8px -2px rgba(20,40,70,.07);transition:.18s ease;}
-	.s-card:hover {box-shadow:0 6px 18px -6px rgba(20,40,70,.18);transform:translateY(-3px);}  
-		.s-icon {width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.15rem;margin-bottom:.25rem;box-shadow:0 4px 14px -6px rgba(0,0,0,.35);} /* base if class missing */
-		.s-icon.sd {background:var(--accent-grad);}
-		.s-icon.sec {background:linear-gradient(135deg,#eb3349,#f45c43);} /* security */
-		.s-icon.gov {background:linear-gradient(135deg,#7f00ff,#e100ff);} /* governance */
-		.s-icon.rel {background:linear-gradient(135deg,#0f2027,#2c5364);} /* reliability */
-		.s-icon.sso {background:linear-gradient(135deg,#0072ff,#00c6ff);} /* azure */
-		.s-icon.pam {background:linear-gradient(135deg,#ff416c,#ff4b2b);} /* privileged */
-		.s-card h3 {font-size:.95rem;font-weight:600;color:var(--accent);margin:0;}
-		.s-card p {font-size:.7rem;color:#5a5f63;line-height:1.35;margin:0 0 .35rem;}
-		.chip {display:inline-flex;align-items:center;gap:.35rem;font-size:.55rem;font-weight:600;padding:.32rem .55rem;border-radius:30px;background:var(--accent-soft);color:#b04410;margin:.15rem .25rem .15rem 0;}
-	.faq-block {margin-bottom:2.1rem;}
-		.faq-block h2 {font-size:1.05rem;font-weight:600;color:#1b2d42;margin:0 0 .8rem;letter-spacing:.3px;}
-		details {background:#fff;border:1px solid #f2dacd;border-radius:14px;padding:.8rem .9rem;margin-bottom:.65rem;box-shadow:0 2px 6px -2px rgba(20,40,70,.05);} 
-		details[open] {box-shadow:0 4px 14px -4px rgba(255,106,47,.35);}
-		summary {cursor:pointer;font-weight:600;color:var(--accent);display:flex;align-items:center;gap:.55rem;font-size:.74rem;}
-	summary::-webkit-details-marker{display:none;}
-		.ans {font-size:.66rem;color:#5a514d;line-height:1.45;margin-top:.5rem;}
-	.cta-row {margin-top:.6rem;display:flex;flex-wrap:wrap;gap:.6rem;}
-		.btn-soft {background:#fff3ea;color:#b04410;font-weight:600;border:1px solid #ffd9c2;border-radius:28px;font-size:.7rem;padding:.55rem 1rem;}
-		.btn-soft:hover {background:#ffe9d9;}
-		.btn-primary {font-size:.7rem;padding:.55rem 1rem;border-radius:28px;background:var(--accent-grad);border:none;box-shadow:0 6px 18px -6px rgba(255,106,47,.45);} 
-		.btn-primary:hover {filter:brightness(1.05);} 
-	.foot-note {font-size:.58rem;color:#6b7a88;margin-top:1.4rem;}
-	.section-sep {height:1px;background:linear-gradient(90deg,transparent,#dfe5ec,transparent);margin:1.6rem 0;}
+		.policy-section {background:#fff;border:1px solid #f2dacd;border-radius:22px;padding:1.25rem 1.35rem 1.3rem;margin-bottom:1.35rem;box-shadow:0 2px 8px -2px rgba(20,40,70,.05);} 
+		.policy-section h2 {font-size:.95rem;text-transform:uppercase;color:var(--accent);letter-spacing:.45px;font-weight:700;margin:0 0 .75rem;}
+	.policy-section p, .policy-section li {font-size:.68rem;line-height:1.5;color:#445466;}
+	.policy-section ul {padding-left:1rem;margin:0 0 .75rem;}
+		.badge-pill {display:inline-flex;align-items:center;font-size:.52rem;font-weight:600;padding:.28rem .48rem;border-radius:28px;background:var(--accent-soft);color:#b04410;margin-right:.3rem;margin-bottom:.25rem;}
+	.data-table {width:100%;border-collapse:collapse;font-size:.64rem;margin:.7rem 0 1rem;}
+	.data-table th, .data-table td {border:1px solid #dfe5ec;padding:.4rem .5rem;text-align:left;vertical-align:top;}
+		.data-table th {background:#fff3ea;font-weight:600;color:#b04410;}
+	.foot-note {font-size:.55rem;color:#6b7a88;margin-top:.7rem;}
+	.section-title {font-size:.75rem;font-weight:600;color:#1b2d42;margin:.9rem 0 .4rem;}
+	.top-meta {display:flex;flex-wrap:wrap;gap:.5rem;font-size:.55rem;color:#627384;margin-top:.2rem;}
+	.top-meta span {background:#f2f6fa;border:1px solid #d5dde5;padding:.25rem .55rem;border-radius:30px;}
+	.table-wrap {overflow:auto;} 
 </style>
-<div class="fixed-page-shell">
-	<div class="fp-container">
-		<div class="fp-scroll">
-			<div class="page-head">
-				<a href="/my-workspace/" class="back-link"><i class="bi bi-arrow-left"></i> WORKSPACE</a>
-				<div>
-					<h1>Help & Support</h1>
-					<div class="page-sub">Quick links, escalation paths, and FAQs to resolve access & identity issues in Swadhikaar.</div>
+<div class="fp-container">
+	<div class="fp-scroll">
+		<div class="page-head">
+			<a href="/my-workspace/" class="back-link"><i class="bi bi-arrow-left"></i> WORKSPACE</a>
+			<div>
+				<h1>Privacy & Data Protection</h1>
+				<div class="page-sub">How Swadhikaar handles identity data, access workflows and audit events inside this prototype environment.</div>
+				<div class="top-meta">
+					<span>Prototype Draft</span><span>Version 0.3</span><span>Non‑Production</span>
 				</div>
 			</div>
-			<div class="support-grid">
-				<div class="s-card">
-					  <div class="s-icon sd"><i class="bi bi-chat-dots"></i></div>
-					<h3>Service Desk</h3>
-					<p>Password resets, login issues, first‑level triage.</p>
-					<div class="chip"><i class="bi bi-envelope"></i> servicedesk@nido.com</div>
-					<div class="chip"><i class="bi bi-telephone"></i> +1‑800‑NIDO‑SD</div>
-				</div>
-				<div class="s-card">
-					  <div class="s-icon sec"><i class="bi bi-shield-lock"></i></div>
-					<h3>Security Ops</h3>
-					<p>Compromise, MFA failure, suspicious sessions.</p>
-					<div class="chip"><i class="bi bi-envelope"></i> secops@nido.com</div>
-					<div class="chip"><i class="bi bi-slack"></i> #sec-ops</div>
-				</div>
-				<div class="s-card">
-					  <div class="s-icon gov"><i class="bi bi-diagram-3"></i></div>
-					<h3>Access Governance</h3>
-					<p>Role design, certification cadence, entitlement hygiene.</p>
-					<div class="chip"><i class="bi bi-envelope"></i> accessgov@nido.com</div>
-					<div class="chip"><i class="bi bi-slack"></i> #iam-governance</div>
-				</div>
-				<div class="s-card">
-					  <div class="s-icon rel"><i class="bi bi-cloud-check"></i></div>
-					<h3>Platform Reliability</h3>
-					<p>Latency, outage reports, regional status.</p>
-					<div class="chip"><i class="bi bi-envelope"></i> platform@nido.com</div>
-					<div class="chip"><i class="bi bi-slack"></i> #platform-status</div>
-				</div>
-				<div class="s-card">
-					  <div class="s-icon sso"><i class="bi bi-windows"></i></div>
-					<h3>Azure SSO</h3>
-					<p>Redirect failures, conditional access blocks.</p>
-					<div class="chip"><i class="bi bi-envelope"></i> sso-support@nido.com</div>
-					<div class="chip"><i class="bi bi-sliders"></i> CAT‑SSO</div>
-				</div>
-				<div class="s-card">
-					  <div class="s-icon pam"><i class="bi bi-key"></i></div>
-					<h3>Privileged Access</h3>
-					<p>Break‑glass, elevated session oversight.</p>
-					<div class="chip"><i class="bi bi-envelope"></i> pam@nido.com</div>
-					<div class="chip"><i class="bi bi-shield-exclamation"></i> P1 Pager</div>
-				</div>
-			</div>
-			<div class="section-sep"></div>
-			<div class="faq-block">
-				<h2>Frequently Asked Questions</h2>
-				<details>
-					<summary><i class="bi bi-clock-history"></i> Why can't I recertify again now?</summary>
-					<div class="ans">A 15‑day governance cooldown ensures reviews are meaningful and prevents noisy duplicate certifications.</div>
-				</details>
-				<details>
-					<summary><i class="bi bi-shield-check"></i> Grant workflow path?</summary>
-					<div class="ans">CTO → CISO → Application Owner. Stages can skip CISO if initiated by CISO.</div>
-				</details>
-				<details>
-					<summary><i class="bi bi-x-octagon"></i> Revoke workflow path?</summary>
-					<div class="ans">CTO → Application Owner. Emergency revokes: notify Security Ops for expedited handling.</div>
-				</details>
-				<details>
-					<summary><i class="bi bi-person-gear"></i> Where do roles originate?</summary>
-					<div class="ans">Prototype roles are mock HR + app sources; production uses authoritative HR feed & entitlement catalogs.</div>
-				</details>
-				<details>
-					<summary><i class="bi bi-file-earmark-text"></i> What is event history?</summary>
-					<div class="ans">Append‑only audit chain of actions (actor, timestamp, resulting status) for compliance & forensics.</div>
-				</details>
-				<details>
-					<summary><i class="bi bi-envelope-exclamation"></i> Incorrect data?</summary>
-					<div class="ans">Raise a data quality ticket to Access Governance with examples; upstream corrections propagate downstream.</div>
-				</details>
-			</div>
-			<div class="cta-row">
-				<a href="/my-workspace/" class="btn btn-soft"><i class="bi bi-arrow-left"></i> Workspace</a>
-				<a href="mailto:servicedesk@nido.com?subject=Swadhikaar%20Support" class="btn btn-primary"><i class="bi bi-envelope-fill"></i> Contact Support</a>
-			</div>
-			<div class="foot-note">© {{ now|date:'Y' }} Swadhikaar • Internal prototype support directory.</div>
 		</div>
+
+		<div class="policy-section" id="scope">
+			<h2>1. Scope</h2>
+			<p>This statement covers only the Swadhikaar IAM prototype. It illustrates patterns for identity, access visibility, and approval logging. A production deployment would include formal corporate privacy notices and jurisdictional addenda.</p>
+		</div>
+
+		<div class="policy-section" id="data-categories">
+			<h2>2. Data Categories</h2>
+			<div class="table-wrap">
+				<table class="data-table">
+					<thead><tr><th>Category</th><th>Examples</th><th>Purpose</th><th>Retention (Prototype)</th></tr></thead>
+					<tbody>
+						<tr><td>Identity Profile</td><td>Name, email, designation</td><td>Render dashboards & role resolution</td><td>Rebuilt per session</td></tr>
+						<tr><td>Access Presence</td><td>Per‑app booleans</td><td>Access footprint view</td><td>Ephemeral sets</td></tr>
+						<tr><td>Role Assignments</td><td>Application role strings</td><td>Visualization of entitlements</td><td>Demo only</td></tr>
+						<tr><td>Workflow Events</td><td>Event type, requester, stage</td><td>Approval routing & audit</td><td>SQLite transient</td></tr>
+						<tr><td>Event History</td><td>Action, actor, status</td><td>Immutable trace chain</td><td>SQLite transient</td></tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<div class="policy-section" id="basis">
+			<h2>3. Lawful Basis (Analogue)</h2>
+			<p>In production: legitimate interests and contractual necessity for corporate identity operations. This prototype simulates those bases for demonstration.</p>
+		</div>
+
+		<div class="policy-section" id="flow">
+			<h2>4. Data Flow</h2>
+			<p>HR profile & roles → Presence sets → User dashboards → Access workflows (Grant / Revoke / Recertify) → Event status → Event history (append‑only).</p>
+		</div>
+
+		<div class="policy-section" id="security">
+			<h2>5. Security Controls</h2>
+			<ul>
+				<li><span class="badge-pill">Least Privilege</span> Role separation across approval stages.</li>
+				<li><span class="badge-pill">Immutable Logs</span> History entries are append‑only.</li>
+				<li><span class="badge-pill">Cooldown</span> 15‑day certification throttle.</li>
+				<li><span class="badge-pill">Transparency</span> Users view their roles & access footprint.</li>
+			</ul>
+		</div>
+
+		<div class="policy-section" id="choices">
+			<h2>6. User Choices</h2>
+			<p>Profile & access footprint accessible on the <em>My Profile & Access</em> page. Revokes and recertification actions surface in dashboards with status progression.</p>
+		</div>
+
+		<div class="policy-section" id="retention">
+			<h2>7. Retention</h2>
+			<p>Demo data is non‑persistent. A production system would implement retention schedules and purge automation.</p>
+		</div>
+
+		<div class="policy-section" id="transfers">
+			<h2>8. International Transfers</h2>
+			<p>Not applicable in the local prototype. Production would apply regional data residency policies where required.</p>
+		</div>
+
+		<div class="policy-section" id="incidents">
+			<h2>9. Incident Response</h2>
+			<p>Escalate suspected compromise or abuse to Security Operations. Event chains help reconstruct access decisions quickly.</p>
+		</div>
+
+		<div class="policy-section" id="changes">
+			<h2>10. Changes</h2>
+			<p>Prototype text may change without notice. Production would version updates with effective dates and in‑app notification.</p>
+		</div>
+
+		<div class="policy-section" id="contact">
+			<h2>11. Contact</h2>
+			<p>Prototype enquiries: <strong>accessgov@nido.com</strong>. Production privacy requests would route to a formal privacy office mailbox.</p>
+			<div class="foot-note">Document Version 0.3 • For internal IAM design evaluation only.</div>
+		</div>
+
+		<div class="foot-note">© {{ now|date:'Y' }} Swadhikaar • Prototype Privacy Statement (Non‑Production).</div>
 	</div>
 </div>
 {% endblock %}
