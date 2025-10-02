@@ -1,28 +1,61 @@
-<!-- Reject Confirmation Modal -->
-<div class="modal fade" id="appOwnerRejectConfirmModal" tabindex="-1" aria-hidden="true">
-	<div class="modal-dialog modal-dialog-centered">
-		<div class="modal-content">
-			<div class="modal-header bg-danger text-white py-2">
-				<h6 class="modal-title mb-0">Confirm Rejection</h6>
-				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-			</div>
-			<div class="modal-body">
-				<p class="mb-2">You are about to <strong class="text-danger">Reject</strong> this application request.</p>
-				<p class="small text-muted mb-1">Event ID: <span id="app-owner-reject-target-id" class="fw-semibold"></span></p>
-				<ul class="small text-muted mb-3 ps-3">
-					<li>This action cannot be undone.</li>
-					<li>Status will immediately change to Rejected.</li>
-					<li>A new request will be required to restart processing.</li>
-				</ul>
-				<div class="form-check">
-					<input class="form-check-input" type="checkbox" id="app-owner-ack-reject-box">
-					<label class="form-check-label small" for="app-owner-ack-reject-box">I understand and want to proceed.</label>
-				</div>
-			</div>
-			<div class="modal-footer py-2">
-				<button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-				<button type="button" class="btn btn-danger btn-sm" id="app-owner-confirm-reject-btn" disabled>Reject Request</button>
-			</div>
-		</div>
-	</div>
-</div>
+        // Modal integration variables
+        const rejectModalEl = document.getElementById('appOwnerRejectConfirmModal');
+        const rejectIdSpan = document.getElementById('app-owner-reject-target-id');
+        const confirmRejectBtn = document.getElementById('app-owner-confirm-reject-btn');
+        const ackBox = document.getElementById('app-owner-ack-reject-box');
+        let pendingReject = null;
+        let bsRejectModal = null;
+        if(rejectModalEl){ bsRejectModal = new bootstrap.Modal(rejectModalEl); }
+        if(ackBox){ ackBox.addEventListener('change', ()=>{ if(confirmRejectBtn) confirmRejectBtn.disabled = !ackBox.checked; }); }
+
+        function performAction(requestItem,eventId,action){
+
+
+
+
+
+
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    requestItem.style.transition = 'opacity 0.5s';
+                    requestItem.style.opacity = '0';
+                    setTimeout(() => requestItem.remove(), 500);
+                } else {
+                    alert('Failed to update event status: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the event status.');
+            });
+        }
+
+        requestList.addEventListener('click', function (e) {
+            const button = e.target.closest('.btn-app-owner-action');
+            if (!button) return;
+            const action = button.getAttribute('data-app-owner-action');
+            const requestItem = button.closest('.request-item');
+            const eventId = requestItem.getAttribute('data-event-id');
+            if (!action || !eventId) { console.error('Action or Event ID missing.'); return; }
+
+            if(action === 'reject'){
+                pendingReject = { requestItem, eventId };
+                if(rejectIdSpan) rejectIdSpan.textContent = eventId;
+                if(ackBox){ ackBox.checked = false; }
+                if(confirmRejectBtn){ confirmRejectBtn.disabled = true; }
+                if(bsRejectModal){ bsRejectModal.show(); }
+                return;
+            }
+            performAction(requestItem,eventId,action);
+        });
+
+        if(confirmRejectBtn){
+            confirmRejectBtn.addEventListener('click', function(){
+                if(!pendingReject) return;
+                const {requestItem,eventId} = pendingReject;
+                if(bsRejectModal) bsRejectModal.hide();
+                performAction(requestItem,eventId,'reject');
+                pendingReject = null;
+            });
+        }
