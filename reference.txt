@@ -1,50 +1,192 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Need Help? • Swadhikaar{% endblock %}
+{% block content %}
+{% if not hide_header %}<div style="height:0"></div>{% endif %}
+<style>
+  body, .wrapper {min-height:100vh;}
+  .help-hero {max-width:880px;margin:0 auto 2.2rem;padding:2.5rem 2rem;border-radius:32px;background:linear-gradient(135deg,#ff6a2f,#ff9d1a);color:#fff;position:relative;overflow:hidden;z-index:1;}
+  .help-hero:before {content:"";position:absolute;inset:0;background:radial-gradient(circle at 78% 22%,rgba(255,255,255,.35),transparent 60%);}  
+  .help-hero h1 {font-weight:600;font-size:2.2rem;letter-spacing:.5px;margin:0 0 .75rem;}
+  .help-hero p.lead {font-size:1.05rem;margin:0;opacity:.92;}
+  .support-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.4rem;max-width:1080px;margin:0 auto 3rem;position:relative;z-index:2;}
+  .card-support {background:#fff;border:1px solid #ffe0ce;border-radius:20px;padding:1.3rem 1.35rem;box-shadow:0 8px 28px -10px rgba(0,0,0,.18);position:relative;transition:.25s ease;}
+  .card-support:hover {transform:translateY(-5px);box-shadow:0 12px 32px -10px rgba(0,0,0,.25);}  
+  .card-support h3 {font-size:1rem;font-weight:600;margin:0 0 .4rem;color:#ff5a25;letter-spacing:.4px;}
+  .card-support p {font-size:.8rem;line-height:1.35;color:#555;margin:0 0 .75rem;}
+  .contact-chip {display:inline-flex;align-items:center;font-size:.65rem;font-weight:600;padding:.35rem .55rem;border-radius:40px;background:#ffe6dc;color:#a33906;gap:.35rem;margin:.15rem .35rem .15rem 0;}
+  .cta-row {text-align:center;margin-bottom:2.5rem;}
+  .cta-row .btn {border-radius:40px;padding:.85rem 1.5rem;font-weight:600;letter-spacing:.5px;}
+  .faq-wrap {max-width:960px;margin:0 auto 4rem;position:relative;z-index:2;}
+  .faq-wrap h2 {font-size:1.3rem;font-weight:600;letter-spacing:.5px;color:#ff5d2f;margin:0 0 1rem;}
+  details {background:#fff;border:1px solid #ffe0ce;border-radius:18px;padding:1rem 1.15rem;margin-bottom:.85rem;box-shadow:0 4px 18px -6px rgba(0,0,0,.15);}
+  details[open] {box-shadow:0 6px 22px -6px rgba(0,0,0,.25);}  
+  summary {cursor:pointer;font-weight:600;color:#ff4d1a;display:flex;align-items:center;gap:.5rem;}
+  summary::-webkit-details-marker {display:none;}
+  .res-line {font-size:.78rem;color:#444;margin-top:.65rem;line-height:1.4;}
+  .channel-icon {width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#ff6a2f,#ffa022);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2rem;margin-bottom:.6rem;}
+  .breadcrumb-back {display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;font-size:.75rem;font-weight:600;letter-spacing:.5px;background:#fff;border:1px solid #ffd9c7;padding:.45rem .75rem;border-radius:40px;color:#ff5a25;margin-bottom:1.2rem;}
+  .breadcrumb-back:hover {background:#fff5f0;}
+</style>
+<div class="help-hero mt-3">
+  <a href="/login/" class="breadcrumb-back"><i class="bi bi-arrow-left"></i> BACK TO LOGIN</a>
+  <h1>Need Help?</h1>
+  <p class="lead">We're here to get you back on track. Explore quick answers, self‑service options, and direct support channels for Swadhikaar.</p>
+</div>
+<div class="support-grid">
+  <div class="card-support">
+    <div class="channel-icon"><i class="bi bi-chat-dots"></i></div>
+    <h3>Service Desk (Tier 1)</h3>
+    <p>General access problems, password resets, portal navigation issues.</p>
+    <div class="contact-chip"><i class="bi bi-envelope"></i> servicedesk@nido.com</div>
+    <div class="contact-chip"><i class="bi bi-telephone"></i> +1-800-NIDO-SD</div>
+    <div class="small text-muted mt-2">Hours: 24x5 (Mon–Fri)</div>
+  </div>
+  <div class="card-support">
+    <div class="channel-icon"><i class="bi bi-shield-lock"></i></div>
+    <h3>Security Operations</h3>
+    <p>Suspicious activity, compromised accounts, MFA problems.</p>
+    <div class="contact-chip"><i class="bi bi-envelope"></i> secops@nido.com</div>
+    <div class="contact-chip"><i class="bi bi-slack"></i> #sec-ops</div>
+    <div class="small text-muted mt-2">Critical incidents: escalate immediately.</div>
+  </div>
+  <div class="card-support">
+    <div class="channel-icon"><i class="bi bi-diagram-3"></i></div>
+    <h3>Access Governance</h3>
+    <p>Role design, certification cycles, recertification wait time clarifications.</p>
+    <div class="contact-chip"><i class="bi bi-envelope"></i> accessgov@nido.com</div>
+    <div class="contact-chip"><i class="bi bi-slack"></i> #iam-governance</div>
+  </div>
+  <div class="card-support">
+    <div class="channel-icon"><i class="bi bi-cloud-check"></i></div>
+    <h3>Platform Reliability</h3>
+    <p>Outages, performance degradation, regional availability questions.</p>
+    <div class="contact-chip"><i class="bi bi-envelope"></i> platform@nido.com</div>
+    <div class="contact-chip"><i class="bi bi-slack"></i> #platform-status</div>
+  </div>
+  <div class="card-support">
+    <div class="channel-icon"><i class="bi bi-windows"></i></div>
+    <h3>Azure SSO Support</h3>
+    <p>SSO redirect failures, consent prompts, conditional access blocks.</p>
+    <div class="contact-chip"><i class="bi bi-envelope"></i> sso-support@nido.com</div>
+    <div class="contact-chip"><i class="bi bi-sliders"></i> Change Ticket: CAT-SSO</div>
+  </div>
+  <div class="card-support">
+    <div class="channel-icon"><i class="bi bi-key"></i></div>
+    <h3>Privileged Access</h3>
+    <p>Break-glass requests, elevated session approval, emergency revokes.</p>
+    <div class="contact-chip"><i class="bi bi-envelope"></i> pam@nido.com</div>
+    <div class="contact-chip"><i class="bi bi-shield-exclamation"></i> Pager Duty: P1 Only</div>
+  </div>
+</div>
+<div class="faq-wrap">
+  <h2>Frequently Asked Questions</h2>
+  <details>
+    <summary><i class="bi bi-clock-history"></i> Why can't I recertify again right now?</summary>
+    <div class="res-line">Recertification requests are throttled by a 15‑day governance cooldown. This ensures meaningful review cycles and reduces certification noise. The page will show eligibility once the window expires.</div>
+  </details>
+  <details>
+    <summary><i class="bi bi-shield-check"></i> What happens after I request new access?</summary>
+    <div class="res-line">Grant requests follow a staged workflow: CTO approval → CISO approval → Application Owner finalization, with each action logged in event history for audit traceability.</div>
+  </details>
+  <details>
+    <summary><i class="bi bi-x-octagon"></i> How do I revoke access immediately?</summary>
+    <div class="res-line">Use the Revoke flow in your dashboard. Emergency (P1) cases: contact Security Operations and mark the ticket as P1 to trigger accelerated policy execution.</div>
+  </details>
+  <details>
+    <summary><i class="bi bi-person-gear"></i> Where do application roles come from?</summary>
+    <div class="res-line">Roles originate from the HRMS simulation dataset here, but in production they would sync from authoritative IAM sources (HR feed + role catalog + entitlement registry).</div>
+  </details>
+  <details>
+    <summary><i class="bi bi-file-earmark-text"></i> How is event history used?</summary>
+    <div class="res-line">Every approval or rejection pushes an immutable log row (actor, timestamp, resulting state). This powers audit reporting, anomaly detection, and compliance attestations.</div>
+  </details>
+  <details>
+    <summary><i class="bi bi-envelope-exclamation"></i> I found incorrect data—what should I do?</summary>
+    <div class="res-line">Open a data quality ticket to Access Governance with examples. Erroneous identity data should be corrected at the source system; downstream copies refresh on ingestion.</div>
+  </details>
+</div>
+<div class="cta-row">
+  <a class="btn btn-outline-light border-0 shadow-sm" style="background:#ff6a2f;color:#fff" href="/login/"><i class="bi bi-arrow-left"></i> Back to Login</a>
+  <a class="btn btn-light ms-2" href="mailto:servicedesk@nido.com?subject=Swadhikaar%20Support"><i class="bi bi-envelope-fill"></i> Contact Support</a>
+</div>
+<div class="text-center small text-muted mb-5">© {{ now|date:'Y' }} Swadhikaar – Internal prototype support directory.</div>
+{% endblock %}
 
-@login_required
-def my_profile_access(request):
-    """Profile & Access overview for the signed-in employee."""
-    email = (request.user.email or '').lower()
-    hrms_rows = get_hrms_list()
-    hrms_row = next((r for r in hrms_rows if (r.get('business_email') or '').lower() == email), None)
-    if not hrms_row:
-        hrms_row = {
-            'first_name': request.user.first_name or 'Unknown',
-            'last_name': request.user.last_name or '',
-            'business_email': email,
-            'entity_name': 'N/A',
-            'external_designation': 'N/A',
-            'internal_designation': 'N/A',
-            'employee_status': 'A',
-        }
 
-    presence = presence_for_email(email)
-    role_field_map = {
-        'rpulse': 'rpulse_roles',
-        'dre': 'dre_roles',
-        'ingenious': 'ingenious_roles',
-        'exponentia': 'exponentia_roles',
-        'neo': 'neo_roles',
-        'dlp': 'dlp_roles',
-    }
-    app_info = []
-    for app_key, field in role_field_map.items():
-        roles_csv = hrms_row.get(field, '')
-        roles = [r.strip() for r in roles_csv.split(',') if r.strip()]
-        app_info.append({
-            'key': app_key,
-            'name': app_key.capitalize(),
-            'has_access': bool(presence.get(app_key)),
-            'roles': roles,
-            'role_count': len(roles),
-        })
+privacy.html
 
-    full_name = f"{hrms_row.get('first_name','')} {hrms_row.get('last_name','')}".strip()
-    status = 'Active' if hrms_row.get('employee_status') == 'A' else 'Inactive'
-    context = {
-        'full_name': full_name,
-        'employee': hrms_row,
-        'presence': presence,
-        'app_info': app_info,
-        'status_text': status,
-    }
-    return render(request, 'my_profile_access.html', context)
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Privacy & Data Protection • Swadhikaar{% endblock %}
+{% block content %}
+{% if not hide_header %}<div style="height:0"></div>{% endif %}
+<style>
+  body, .wrapper {min-height:100vh;}
+  .privacy-hero {max-width:900px;margin:1.5rem auto 2.2rem;padding:2.4rem 2.1rem;border-radius:34px;background:linear-gradient(135deg,#ff6a2f,#ff9d1a);color:#fff;position:relative;overflow:hidden;z-index:1;}
+  .privacy-hero:before {content:"";position:absolute;inset:0;background:radial-gradient(circle at 72% 28%,rgba(255,255,255,.38),transparent 63%);}  
+  .privacy-hero h1 {font-weight:600;font-size:2.15rem;margin:0 0 .8rem;letter-spacing:.6px;}
+  .privacy-hero p {font-size:1.02rem;margin:0;opacity:.9;}
+  .policy-section {max-width:980px;margin:0 auto 2.2rem;background:#fff;border:1px solid #ffe2d0;padding:1.55rem 1.6rem;border-radius:26px;box-shadow:0 10px 30px -14px rgba(0,0,0,.22);position:relative;z-index:2;}  
+  .policy-section h2 {font-size:1.05rem;text-transform:uppercase;color:#ff5a25;letter-spacing:.55px;font-weight:700;margin:0 0 .9rem;}
+  .policy-section h3 {font-size:.9rem;font-weight:600;margin:1.1rem 0 .45rem;color:#ff5a25;letter-spacing:.4px;}
+  .policy-section p, .policy-section li {font-size:.78rem;line-height:1.5;color:#444;}
+  .policy-section ul {padding-left:1.1rem;margin:0 0 .9rem;}
+  .badge-pill {display:inline-flex;align-items:center;font-size:.6rem;font-weight:600;padding:.35rem .55rem;border-radius:40px;background:#ffe6dc;color:#a33906;margin-right:.4rem;}
+  .data-table {width:100%;border-collapse:collapse;font-size:.7rem;margin:.9rem 0 1.2rem;}
+  .data-table th, .data-table td {border:1px solid #ffd9c7;padding:.45rem .55rem;text-align:left;vertical-align:top;}
+  .data-table th {background:#fff4ee;font-weight:600;color:#b7420a;}
+  .breadcrumb-back {display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;font-size:.75rem;font-weight:600;letter-spacing:.5px;background:#fff;border:1px solid #ffd9c7;padding:.45rem .75rem;border-radius:40px;color:#ff5a25;margin-bottom:1.2rem;}
+  .breadcrumb-back:hover {background:#fff5f0;}
+  .foot-note {font-size:.62rem;color:#777;margin-top:1.2rem;}
+</style>
+<div class="privacy-hero">
+  <a href="/login/" class="breadcrumb-back"><i class="bi bi-arrow-left"></i> BACK TO LOGIN</a>
+  <h1>Privacy & Data Protection</h1>
+  <p>How Swadhikaar handles identity data, access requests, event logs, and your audit footprint within the platform.</p>
+</div>
+<div class="policy-section">
+  <h2>1. Scope</h2>
+  <p>This privacy statement applies to the Swadhikaar IAM prototype. It describes how user identity attributes, access entitlements, and workflow events are processed. For production deployment a formal corporate privacy notice and regional addenda (e.g., GDPR, CCPA) would supersede this draft.</p>
+  <h2>2. Data Categories We Process</h2>
+  <table class="data-table">
+    <thead><tr><th>Category</th><th>Examples</th><th>Purpose</th><th>Retention (Prototype)</th></tr></thead>
+    <tbody>
+      <tr><td>Identity Profile</td><td>Name, corporate email, designation, employee status</td><td>Populate dashboards, role resolution</td><td>In‑memory / regenerated per session</td></tr>
+      <tr><td>Access Presence</td><td>Boolean per application (e.g., RPulse, Neo)</td><td>Show granted application footprint</td><td>Ephemeral sample sets (non‑persistent)</td></tr>
+      <tr><td>Role Assignments</td><td>Per‑app role strings (e.g., DRE-Role2)</td><td>Prototype entitlement visualization</td><td>In-memory random allocation</td></tr>
+      <tr><td>Workflow Events</td><td>Event type, requester, timestamps, stage</td><td>Audit trail & approval routing</td><td>SQLite / transient dev DB</td></tr>
+      <tr><td>Event History</td><td>Action, actor, resulting status</td><td>Immutable log chain</td><td>SQLite / transient dev DB</td></tr>
+    </tbody>
+  </table>
+  <h2>3. Lawful Basis (Prototype Analogue)</h2>
+  <p>In production, processing would rely on legitimate interests & contractual necessity to operate corporate identity services. This prototype simulates those bases for demonstration only.</p>
+  <h2>4. How Data Flows</h2>
+  <p>Identity & roles (HR feed) → Presence sets (application systems) → User dashboards → Access workflows (Grant / Revoke / Recertify) → Event status table → Event history log. No external transmission occurs in this local environment.</p>
+  <h2>5. Security Controls</h2>
+  <ul>
+    <li><span class="badge-pill">Least Privilege</span> Stage approvals enforce separation of duties.</li>
+    <li><span class="badge-pill">Immutable Logs</span> History entries are append‑only.</li>
+    <li><span class="badge-pill">Cooldown</span> 15‑day recertification throttle reduces abuse.</li>
+    <li><span class="badge-pill">Role Transparency</span> Users can self‑view roles & access footprint.</li>
+  </ul>
+  <h2>6. User Choices & Transparency</h2>
+  <p>Users can review current application access & roles from the <em>My Profile & Access</em> page. Revocation requests and recertify operations are visible in dashboards with stateful progression.</p>
+  <h2>7. Retention & Deletion</h2>
+  <p>This prototype does not persist data beyond the active development lifecycle. A production system would implement programmatic purging aligned with corporate retention schedules.</p>
+  <h2>8. International Transfers</h2>
+  <p>Not applicable in the local prototype. Production design would leverage regional data residency where mandated.</p>
+  <h2>9. Incident Response</h2>
+  <p>Security incidents (suspected compromise, privilege misuse) should be escalated to Security Operations. Event chains enable rapid reconstruction of access decisions.</p>
+  <h2>10. Changes to This Notice</h2>
+  <p>Material updates will be versioned and surfaced in‑app with an effective date indicator. Prototype edits may occur without notice.</p>
+  <h2>11. Contact</h2>
+  <p>Questions or data subject enquiries (production context) would route to: <strong>privacy@nido.com</strong>. In this prototype, reach out via <strong>accessgov@nido.com</strong>.</p>
+  <div class="foot-note">Document Version: 0.3 • Generated for internal IAM design evaluation only.</div>
+</div>
+<div class="text-center mb-5">
+  <a class="btn btn-outline-light border-0 shadow-sm" style="background:#ff6a2f;color:#fff" href="/login/"><i class="bi bi-arrow-left"></i> Back to Login</a>
+</div>
+<div class="text-center small text-muted mb-5">© {{ now|date:'Y' }} Swadhikaar – Prototype Privacy Statement (Non‑Production).</div>
+{% endblock %}
 
