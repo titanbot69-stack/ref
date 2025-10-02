@@ -1,33 +1,81 @@
-	{% if show_access_requests %}
-	<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ra-access-requests" type="button">Access Requests</button></li>
-	{% endif %}
+    """Stage-based workflow for Grant / Revoke access requests.
 
-	{% if show_access_requests %}
-	<div class="tab-pane fade" id="ra-access-requests">
-		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="ra-access-requests-container" placeholder="Search..."></div>
-		<div id="ra-access-requests-container">{% include 'partials/access_requests_table.html' %}</div>
-	</div>
-	{% endif %}
+    Grant flow: CTO_APPROVAL -> CISO_APPROVAL -> Application Owner -> Closed
+    Revoke flow: CTO_APPROVAL -> Application Owner -> Closed
+    Reject at any stage: eve_status = Rejected, assigned_to = rejecting actor's email.
+    """
 
+            cursor.execute(
+                """
+                SELECT event_id, event_description, assigned_to, COALESCE(eve_status,'open') AS eve_status
+                FROM event_status
+                WHERE event_id = %s
+                FOR UPDATE
+                """,
+                [event_id]
+            )
+            row = cursor.fetchone()
+            if not row:
+                return JsonResponse({'success': False, 'error': 'Event not found'}, status=404)
+            _event_id, event_description, current_assigned_to, current_eve_status = row
 
-// Access Request action buttons (only if tab rendered for CTO/CISO)
-document.addEventListener('DOMContentLoaded',function(){
-	const container = document.getElementById('ra-access-requests-container');
-	if(!container) return;
-	// Re-bind similar to admin (no delegation for now)
-	container.querySelectorAll('.btn-action').forEach(btn=>{
-		btn.addEventListener('click', function(){
-			const row = this.closest('.request-item');
-			if(!row) return;
-			const eventId = row.dataset.eventId;
-			const action = this.dataset.action;
-			fetch('/action/update-event-status/',{
-				method:'POST',
-				headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
-				body: JSON.stringify({event_id: eventId, action})
-			}).then(r=>r.json()).then(d=>{
-				if(d.success){row.style.transition='opacity .5s';row.style.opacity=0;setTimeout(()=>row.remove(),500);}else{alert('Failed: '+(d.error||'Unknown'));}
-			}).catch(()=>alert('Network error'));
-		});
-	});
-});
+            if current_eve_status.lower() != 'open':
+                return JsonResponse({'success': False, 'error': 'Event already closed'}, status=409)
+
+            # Determine caller roles
+            user_email = (request.user.email or '').lower()
+            hrms_rows = get_hrms_list()
+            hrms_row = next((r for r in hrms_rows if (r.get('business_email') or '').lower() == user_email), None)
+            external_designation = (hrms_row or {}).get('external_designation', '')
+            app_owner_emails = {o['email_id'].lower() for o in application_owners}
+
+            def deny(msg='Not authorized for this stage'):
+                return JsonResponse({'success': False, 'error': msg}, status=403)
+
+            # Stage authorization
+            if current_assigned_to == 'CTO_APPROVAL' and external_designation != 'Chief Technology Officer':
+                return deny()
+            if current_assigned_to == 'CISO_APPROVAL' and external_designation != 'Chief Information Security Officer':
+                return deny()
+            if current_assigned_to == 'Application Owner' and user_email not in app_owner_emails:
+                return deny()
+
+            is_grant = 'Grant Access Request' in (event_description or '')
+            is_revoke = 'Revoke Access Request' in (event_description or '')
+            if not (is_grant or is_revoke):
+                return JsonResponse({'success': False, 'error': 'Unrecognized request type'}, status=400)
+
+            next_assigned_to = current_assigned_to
+            new_status = current_eve_status
+            final = False
+
+            if action == 'reject':
+                new_status = 'Rejected'
+                next_assigned_to = user_email
+                final = True
+            else:  # accept
+                if is_grant:
+                    if current_assigned_to == 'CTO_APPROVAL':
+                        next_assigned_to = 'CISO_APPROVAL'
+                        new_status = 'open'
+                    elif current_assigned_to == 'CISO_APPROVAL':
+                        next_assigned_to = 'Application Owner'
+                        new_status = 'open'
+                    elif current_assigned_to == 'Application Owner':
+                        next_assigned_to = user_email
+                        new_status = 'Closed'
+                        final = True
+                    else:
+                        return JsonResponse({'success': False, 'error': 'Invalid stage for grant flow'}, status=400)
+                elif is_revoke:
+                    if current_assigned_to == 'CTO_APPROVAL':
+                        next_assigned_to = 'Application Owner'
+                        new_status = 'open'
+                    elif current_assigned_to == 'Application Owner':
+                        next_assigned_to = user_email
+                        new_status = 'Closed'
+                        final = True
+                    else:
+                        return JsonResponse({'success': False, 'error': 'Invalid stage for revoke flow'}, status=400)
+
+            assigned_at = timezone.now()
