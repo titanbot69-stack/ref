@@ -1,8 +1,25 @@
-    path('help/', views.help_page, name='help'),
-    path('privacy/', views.privacy_page, name='privacy'),
+/* Minimal header mode (help/privacy) */
+body .brand-group.minimal {gap:.5rem;}
+body .brand-group.minimal .brand-logo {height:46px;}
+body .brand-group.minimal .disabled-link {pointer-events:none;cursor:default;}
 
-def help_page(request):
-    return render(request, 'help.html', {'hide_header': True})
 
-def privacy_page(request):
-    return render(request, 'privacy.html', {'hide_header': True})
+.aux-links a:visited{color:#1d54c7;}
+.aux-links a.focus, .aux-links a:focus{outline:2px solid #1d54c7;outline-offset:2px;border-radius:4px;}
+
+
+        <div class="brand-group{% if minimal_header %} minimal{% endif %}">
+          <a class="brand{% if minimal_header %} disabled-link{% endif %}" href="{% if minimal_header %}javascript:void(0){% else %}/my-workspace/{% endif %}">
+
+
+            {% if not minimal_header %}<span class="brand-text">Swadhikaar</span>{% endif %}
+
+          {% if not minimal_header %}
+
+          {% endif %}
+
+        {% if not minimal_header %}
+
+
+
+        {% endif %}
