@@ -1,8 +1,50 @@
-    path('my-profile/', views.my_profile_access, name='my-profile-access'),
 
+@login_required
+def my_profile_access(request):
+    """Profile & Access overview for the signed-in employee."""
+    email = (request.user.email or '').lower()
+    hrms_rows = get_hrms_list()
+    hrms_row = next((r for r in hrms_rows if (r.get('business_email') or '').lower() == email), None)
+    if not hrms_row:
+        hrms_row = {
+            'first_name': request.user.first_name or 'Unknown',
+            'last_name': request.user.last_name or '',
+            'business_email': email,
+            'entity_name': 'N/A',
+            'external_designation': 'N/A',
+            'internal_designation': 'N/A',
+            'employee_status': 'A',
+        }
 
-  min-height: 100%;
+    presence = presence_for_email(email)
+    role_field_map = {
+        'rpulse': 'rpulse_roles',
+        'dre': 'dre_roles',
+        'ingenious': 'ingenious_roles',
+        'exponentia': 'exponentia_roles',
+        'neo': 'neo_roles',
+        'dlp': 'dlp_roles',
+    }
+    app_info = []
+    for app_key, field in role_field_map.items():
+        roles_csv = hrms_row.get(field, '')
+        roles = [r.strip() for r in roles_csv.split(',') if r.strip()]
+        app_info.append({
+            'key': app_key,
+            'name': app_key.capitalize(),
+            'has_access': bool(presence.get(app_key)),
+            'roles': roles,
+            'role_count': len(roles),
+        })
 
-  min-height: 100vh; /* let wrapper grow with content */
+    full_name = f"{hrms_row.get('first_name','')} {hrms_row.get('last_name','')}".strip()
+    status = 'Active' if hrms_row.get('employee_status') == 'A' else 'Inactive'
+    context = {
+        'full_name': full_name,
+        'employee': hrms_row,
+        'presence': presence,
+        'app_info': app_info,
+        'status_text': status,
+    }
+    return render(request, 'my_profile_access.html', context)
 
-body { overflow-y: auto; }
