@@ -1,5 +1,33 @@
-   # Determine if this RA also holds CTO or CISO designation (executive approver)
-    hrms_row = next((r for r in all_rows if (r.get('business_email') or '').lower() == email), None)
-    external_designation = (hrms_row or {}).get('external_designation', '')
-    show_access_requests = external_designation in ['Chief Technology Officer', 'Chief Information Security Officer']
- 
+	{% if show_access_requests %}
+	<li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#ra-access-requests" type="button">Access Requests</button></li>
+	{% endif %}
+
+	{% if show_access_requests %}
+	<div class="tab-pane fade" id="ra-access-requests">
+		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="ra-access-requests-container" placeholder="Search..."></div>
+		<div id="ra-access-requests-container">{% include 'partials/access_requests_table.html' %}</div>
+	</div>
+	{% endif %}
+
+
+// Access Request action buttons (only if tab rendered for CTO/CISO)
+document.addEventListener('DOMContentLoaded',function(){
+	const container = document.getElementById('ra-access-requests-container');
+	if(!container) return;
+	// Re-bind similar to admin (no delegation for now)
+	container.querySelectorAll('.btn-action').forEach(btn=>{
+		btn.addEventListener('click', function(){
+			const row = this.closest('.request-item');
+			if(!row) return;
+			const eventId = row.dataset.eventId;
+			const action = this.dataset.action;
+			fetch('/action/update-event-status/',{
+				method:'POST',
+				headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+				body: JSON.stringify({event_id: eventId, action})
+			}).then(r=>r.json()).then(d=>{
+				if(d.success){row.style.transition='opacity .5s';row.style.opacity=0;setTimeout(()=>row.remove(),500);}else{alert('Failed: '+(d.error||'Unknown'));}
+			}).catch(()=>alert('Network error'));
+		});
+	});
+});
