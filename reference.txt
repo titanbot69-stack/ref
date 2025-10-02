@@ -1,25 +1,135 @@
-/* Minimal header mode (help/privacy) */
-body .brand-group.minimal {gap:.5rem;}
-body .brand-group.minimal .brand-logo {height:46px;}
-body .brand-group.minimal .disabled-link {pointer-events:none;cursor:default;}
-
-
-.aux-links a:visited{color:#1d54c7;}
-.aux-links a.focus, .aux-links a:focus{outline:2px solid #1d54c7;outline-offset:2px;border-radius:4px;}
-
-
-        <div class="brand-group{% if minimal_header %} minimal{% endif %}">
-          <a class="brand{% if minimal_header %} disabled-link{% endif %}" href="{% if minimal_header %}javascript:void(0){% else %}/my-workspace/{% endif %}">
-
-
-            {% if not minimal_header %}<span class="brand-text">Swadhikaar</span>{% endif %}
-
-          {% if not minimal_header %}
-
-          {% endif %}
-
-        {% if not minimal_header %}
-
-
-
-        {% endif %}
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Help & Support • Swadhikaar{% endblock %}
+{% block content %}
+<style>
+	:root {--accent:#ff6a2f;--accent-grad:linear-gradient(135deg,#ff6a2f,#ff9d1a);--accent-soft:#fff3ea;--card-border:#e9eef3;}
+	.fixed-page-shell {position:relative;display:flex;flex-direction:column;gap:1.2rem;}
+	.fp-container {background:#ffffff;border:1px solid var(--card-border);border-radius:28px;box-shadow:0 6px 24px -8px rgba(40,40,55,.10),0 2px 8px -2px rgba(40,40,55,.05);padding:1.75rem 1.9rem 2rem;display:flex;flex-direction:column;max-width:1400px;margin:0 auto;width:100%;height:calc(100vh - 110px); /* header ~70 + margin */}
+	@media (max-width: 992px){ .fp-container {height:calc(100vh - 95px);padding:1.25rem 1.2rem 1.4rem;} }
+	.fp-scroll {flex:1 1 auto;overflow:auto;padding-right:.35rem;scrollbar-width:thin;}
+	.fp-scroll::-webkit-scrollbar {width:8px;} .fp-scroll::-webkit-scrollbar-track {background:transparent;} .fp-scroll::-webkit-scrollbar-thumb {background:#c5d1dc;border-radius:40px;} .fp-scroll::-webkit-scrollbar-thumb:hover {background:#b1c0cc;}
+	.page-head {display:flex;flex-wrap:wrap;align-items:flex-start;gap:1.2rem;margin-bottom:1.1rem;}
+		.page-head h1 {font-size:1.65rem;font-weight:600;color:#1b2d42;margin:0;letter-spacing:.4px;}
+	.page-sub {font-size:.9rem;color:#4a5a6a;max-width:740px;line-height:1.4;margin-top:.2rem;}
+		.back-link {display:inline-flex;align-items:center;gap:.45rem;font-size:.7rem;font-weight:600;letter-spacing:.4px;padding:.45rem .85rem;border-radius:40px;background:#fff3ea;border:1px solid #ffd9c2;color:#b04410;text-decoration:none;}
+		.back-link:hover {background:#ffe9d9;}
+	.support-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-bottom:1.8rem;}
+		.s-card {background:#fff;border:1px solid #e6edf3;border-radius:18px;padding:1rem 1rem .95rem;display:flex;flex-direction:column;gap:.35rem;position:relative;box-shadow:0 2px 8px -2px rgba(20,40,70,.07);transition:.18s ease;}
+	.s-card:hover {box-shadow:0 6px 18px -6px rgba(20,40,70,.18);transform:translateY(-3px);}  
+		.s-icon {width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.15rem;margin-bottom:.25rem;box-shadow:0 4px 14px -6px rgba(0,0,0,.35);} /* base if class missing */
+		.s-icon.sd {background:var(--accent-grad);}
+		.s-icon.sec {background:linear-gradient(135deg,#eb3349,#f45c43);} /* security */
+		.s-icon.gov {background:linear-gradient(135deg,#7f00ff,#e100ff);} /* governance */
+		.s-icon.rel {background:linear-gradient(135deg,#0f2027,#2c5364);} /* reliability */
+		.s-icon.sso {background:linear-gradient(135deg,#0072ff,#00c6ff);} /* azure */
+		.s-icon.pam {background:linear-gradient(135deg,#ff416c,#ff4b2b);} /* privileged */
+		.s-card h3 {font-size:.95rem;font-weight:600;color:var(--accent);margin:0;}
+		.s-card p {font-size:.7rem;color:#5a5f63;line-height:1.35;margin:0 0 .35rem;}
+		.chip {display:inline-flex;align-items:center;gap:.35rem;font-size:.55rem;font-weight:600;padding:.32rem .55rem;border-radius:30px;background:var(--accent-soft);color:#b04410;margin:.15rem .25rem .15rem 0;}
+	.faq-block {margin-bottom:2.1rem;}
+		.faq-block h2 {font-size:1.05rem;font-weight:600;color:#1b2d42;margin:0 0 .8rem;letter-spacing:.3px;}
+		details {background:#fff;border:1px solid #f2dacd;border-radius:14px;padding:.8rem .9rem;margin-bottom:.65rem;box-shadow:0 2px 6px -2px rgba(20,40,70,.05);} 
+		details[open] {box-shadow:0 4px 14px -4px rgba(255,106,47,.35);}
+		summary {cursor:pointer;font-weight:600;color:var(--accent);display:flex;align-items:center;gap:.55rem;font-size:.74rem;}
+	summary::-webkit-details-marker{display:none;}
+		.ans {font-size:.66rem;color:#5a514d;line-height:1.45;margin-top:.5rem;}
+	.cta-row {margin-top:.6rem;display:flex;flex-wrap:wrap;gap:.6rem;}
+		.btn-soft {background:#fff3ea;color:#b04410;font-weight:600;border:1px solid #ffd9c2;border-radius:28px;font-size:.7rem;padding:.55rem 1rem;}
+		.btn-soft:hover {background:#ffe9d9;}
+		.btn-primary {font-size:.7rem;padding:.55rem 1rem;border-radius:28px;background:var(--accent-grad);border:none;box-shadow:0 6px 18px -6px rgba(255,106,47,.45);} 
+		.btn-primary:hover {filter:brightness(1.05);} 
+	.foot-note {font-size:.58rem;color:#6b7a88;margin-top:1.4rem;}
+	.section-sep {height:1px;background:linear-gradient(90deg,transparent,#dfe5ec,transparent);margin:1.6rem 0;}
+</style>
+<div class="fixed-page-shell">
+	<div class="fp-container">
+		<div class="fp-scroll">
+			<div class="page-head">
+				<a href="/my-workspace/" class="back-link"><i class="bi bi-arrow-left"></i> WORKSPACE</a>
+				<div>
+					<h1>Help & Support</h1>
+					<div class="page-sub">Quick links, escalation paths, and FAQs to resolve access & identity issues in Swadhikaar.</div>
+				</div>
+			</div>
+			<div class="support-grid">
+				<div class="s-card">
+					  <div class="s-icon sd"><i class="bi bi-chat-dots"></i></div>
+					<h3>Service Desk</h3>
+					<p>Password resets, login issues, first‑level triage.</p>
+					<div class="chip"><i class="bi bi-envelope"></i> servicedesk@nido.com</div>
+					<div class="chip"><i class="bi bi-telephone"></i> +1‑800‑NIDO‑SD</div>
+				</div>
+				<div class="s-card">
+					  <div class="s-icon sec"><i class="bi bi-shield-lock"></i></div>
+					<h3>Security Ops</h3>
+					<p>Compromise, MFA failure, suspicious sessions.</p>
+					<div class="chip"><i class="bi bi-envelope"></i> secops@nido.com</div>
+					<div class="chip"><i class="bi bi-slack"></i> #sec-ops</div>
+				</div>
+				<div class="s-card">
+					  <div class="s-icon gov"><i class="bi bi-diagram-3"></i></div>
+					<h3>Access Governance</h3>
+					<p>Role design, certification cadence, entitlement hygiene.</p>
+					<div class="chip"><i class="bi bi-envelope"></i> accessgov@nido.com</div>
+					<div class="chip"><i class="bi bi-slack"></i> #iam-governance</div>
+				</div>
+				<div class="s-card">
+					  <div class="s-icon rel"><i class="bi bi-cloud-check"></i></div>
+					<h3>Platform Reliability</h3>
+					<p>Latency, outage reports, regional status.</p>
+					<div class="chip"><i class="bi bi-envelope"></i> platform@nido.com</div>
+					<div class="chip"><i class="bi bi-slack"></i> #platform-status</div>
+				</div>
+				<div class="s-card">
+					  <div class="s-icon sso"><i class="bi bi-windows"></i></div>
+					<h3>Azure SSO</h3>
+					<p>Redirect failures, conditional access blocks.</p>
+					<div class="chip"><i class="bi bi-envelope"></i> sso-support@nido.com</div>
+					<div class="chip"><i class="bi bi-sliders"></i> CAT‑SSO</div>
+				</div>
+				<div class="s-card">
+					  <div class="s-icon pam"><i class="bi bi-key"></i></div>
+					<h3>Privileged Access</h3>
+					<p>Break‑glass, elevated session oversight.</p>
+					<div class="chip"><i class="bi bi-envelope"></i> pam@nido.com</div>
+					<div class="chip"><i class="bi bi-shield-exclamation"></i> P1 Pager</div>
+				</div>
+			</div>
+			<div class="section-sep"></div>
+			<div class="faq-block">
+				<h2>Frequently Asked Questions</h2>
+				<details>
+					<summary><i class="bi bi-clock-history"></i> Why can't I recertify again now?</summary>
+					<div class="ans">A 15‑day governance cooldown ensures reviews are meaningful and prevents noisy duplicate certifications.</div>
+				</details>
+				<details>
+					<summary><i class="bi bi-shield-check"></i> Grant workflow path?</summary>
+					<div class="ans">CTO → CISO → Application Owner. Stages can skip CISO if initiated by CISO.</div>
+				</details>
+				<details>
+					<summary><i class="bi bi-x-octagon"></i> Revoke workflow path?</summary>
+					<div class="ans">CTO → Application Owner. Emergency revokes: notify Security Ops for expedited handling.</div>
+				</details>
+				<details>
+					<summary><i class="bi bi-person-gear"></i> Where do roles originate?</summary>
+					<div class="ans">Prototype roles are mock HR + app sources; production uses authoritative HR feed & entitlement catalogs.</div>
+				</details>
+				<details>
+					<summary><i class="bi bi-file-earmark-text"></i> What is event history?</summary>
+					<div class="ans">Append‑only audit chain of actions (actor, timestamp, resulting status) for compliance & forensics.</div>
+				</details>
+				<details>
+					<summary><i class="bi bi-envelope-exclamation"></i> Incorrect data?</summary>
+					<div class="ans">Raise a data quality ticket to Access Governance with examples; upstream corrections propagate downstream.</div>
+				</details>
+			</div>
+			<div class="cta-row">
+				<a href="/my-workspace/" class="btn btn-soft"><i class="bi bi-arrow-left"></i> Workspace</a>
+				<a href="mailto:servicedesk@nido.com?subject=Swadhikaar%20Support" class="btn btn-primary"><i class="bi bi-envelope-fill"></i> Contact Support</a>
+			</div>
+			<div class="foot-note">© {{ now|date:'Y' }} Swadhikaar • Internal prototype support directory.</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
