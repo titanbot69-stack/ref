@@ -1,46 +1,28 @@
-    # Determine initiator designation (allow CTO/CISO to initiate even if not RA)
-    initiator_email = (request.user.email or '').lower()
-    hrms_rows_all = get_hrms_list()
-    initiator_row = next((r for r in hrms_rows_all if (r.get('business_email') or '').lower() == initiator_email), None)
-    initiator_designation = (initiator_row or {}).get('external_designation', '')
+    """Initiate a recertification request.
 
-    if not (
-        initiator_email == (hrms_row.get('ra_email') or '').lower() or
-        initiator_designation in ['Chief Technology Officer', 'Chief Information Security Officer']
-    ):
+    Supports both traditional navigation (redirect) and AJAX (JSON) POST.
+    """
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    # Accept POST for creation; GET can be deprecated later but kept for backward compatibility
+    if request.method not in ['GET', 'POST']:
+        return HttpResponseBadRequest('Unsupported method')
 
 
 
 
-
-            # Determine initial routing based on initiator role & request type
-            is_grant = bool(new_state)
-            if initiator_designation == 'Chief Technology Officer':
-                # CTO initiates: Grant -> CISO first, Revoke -> Application Owner directly
-                initial_assigned = 'CISO_APPROVAL' if is_grant else 'Application Owner'
-            elif initiator_designation == 'Chief Information Security Officer':
-                # CISO initiates: always route to CTO first (both grant & revoke), then skip CISO stage later
-                initial_assigned = 'CTO_APPROVAL'
-            else:
-                # Regular RA initiates: standard path via CTO first
-                initial_assigned = 'CTO_APPROVAL'
+        return JsonResponse({'success': False, 'error': 'Employee not found'}, status=404) if is_ajax else redirect('dashboard')
 
 
+        return JsonResponse({'success': False, 'error': 'Not authorized'}, status=403) if is_ajax else HttpResponseForbidden('Not allowed')
 
 
+        if is_ajax:
+            return JsonResponse({'success': True, 'event_id': event_id, 'message': 'Recertification initiated'})
 
 
-                        # Decide whether to skip CISO based on original requester (if CISO initiated)
-                        trig_row = next((r for r in hrms_rows if (r.get('business_email') or '').lower() == (original_triggered_by or '').lower()), None)
-                        trig_design = (trig_row or {}).get('external_designation', '')
-                        if trig_design == 'Chief Information Security Officer':
-                            next_assigned_to = 'Application Owner'
-                        else:
+        logger.error(f"Recertify failed: {e}")
 
-
-
-
-                    elif current_assigned_to == 'CISO_APPROVAL':
-                        # Edge case: if somehow revoke hit CISO (should not), send to Application Owner
-                        next_assigned_to = 'Application Owner'
-                        new_status = 'open'
+                [event_id, 'Certification Request Failed', request.user.email or '', timezone.now(), 'FAILED']
+            )
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': 'Recertification failed'})
