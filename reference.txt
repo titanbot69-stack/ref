@@ -1,3 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<!-- Roles Modal -->
+<div class="modal fade" id="rolesModal" tabindex="-1" aria-labelledby="rolesModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="rolesModalLabel">Application Roles</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body">
+				<div id="roles-list-container"></div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-primary" style="background:#ff512f;border-color:#ff512f" data-bs-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<div class="d-flex justify-content-between align-items-center mb-3">
+	<h2 class="m-0">Admin Dashboard</h2>
+	<a class="btn btn-primary" style="background:#ff512f;border-color:#ff512f" href="/action/initiate-certification/">Initiate Certification</a>
+</div>
+<ul class="nav nav-tabs" id="adminTabs" role="tablist">
+	<li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#emp" type="button" role="tab">Employee Details</button></li>
+	<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#access" type="button" role="tab">User Access</button></li>
+	<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#app" type="button" role="tab">Application Access</button></li>
+	<li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#event-logs" type="button" role="tab">Event Logs</button></li>
+</ul>
+<div class="tab-content p-3 border border-top-0 card-like">
+	<div class="tab-pane fade show active" id="emp" role="tabpanel">
+		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="employee-details-table-container" placeholder="Search..."></div>
+		<div id="employee-details-table-container">{% include 'partials/employee_details_table.html' %}</div>
+	</div>
+	<div class="tab-pane fade" id="access" role="tabpanel">
+		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="user-access-table-container" placeholder="Search..."></div>
+		<div id="user-access-table-container">{% include 'partials/user_access_table.html' %}</div>
+	</div>
+	<div class="tab-pane fade" id="app" role="tabpanel">
+		<div class="modern-search-box"><i class="fas fa-search"></i><input type="text" data-table-id="application-access-table-body" placeholder="Search..."></div>
+		<div id="application-access-table-container">{% include 'partials/application_access_table.html' %}</div>
+	</div>
+	<div class="tab-pane fade" id="event-logs" role="tabpanel">
+		<div class="table-responsive">
+			<table class="table table-sm table-striped">
+				<thead><tr><th>History ID</th><th>Event ID</th><th>Action</th><th>Performed By</th><th>Performed At</th><th>Status After Action</th></tr></thead>
+				<tbody>
+				{% for log in event_history_data %}
+					<tr>
+						<td>{{ log.history_id }}</td>
+						<td>{{ log.event_id }}</td>
+						<td>{{ log.action }}</td>
+						<td>{{ log.performed_by }}</td>
+						<td>{{ log.performed_at }}</td>
+						<td>{{ log.status_after_action }}</td>
+					</tr>
+				{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
 <div class="modal fade" id="adminRejectConfirmModal" tabindex="-1" aria-hidden="true">
 	<div class="modal-dialog modal-dialog-centered">
 		<div class="modal-content">
@@ -27,9 +97,10 @@
 </div>
 <script>
 // Helper: CSRF cookie retrieval
+function getCookie(name){let v=null;if(document.cookie&&document.cookie!==''){const cs=document.cookie.split(';');for(let i=0;i<cs.length;i++){const c=cs[i].trim();if(c.substring(0,name.length+1)===(name+'=')){v=decodeURIComponent(c.substring(name.length+1));break;}}}return v;}
 
-
-
+// Roles modal (eye buttons)
+document.addEventListener('DOMContentLoaded',function(){
 	document.body.addEventListener('click',function(e){
 		const btn=e.target.closest('.eye-btn');
 		if(btn&&!btn.disabled){
@@ -48,9 +119,13 @@
 			modal.show();
 		}
 	});
+});
 
+// AJAX pagination (admin)
+function bindAdminUserAccess(){document.querySelectorAll('.access-page-link').forEach(l=>{l.addEventListener('click',e=>{e.preventDefault();const url='/ajax/user-access-table/'+l.getAttribute('href');const c=document.getElementById('user-access-table-container');if(!c)return;c.innerHTML='<div class="text-center py-4">Loading...</div>';fetch(url).then(r=>r.text()).then(h=>{c.innerHTML=h;bindAdminUserAccess();});});});}
+bindAdminUserAccess();
 
-
+// Application access loader
 document.addEventListener('DOMContentLoaded',function(){
 	const buttons=document.querySelectorAll('.btn-image');
 	const tbody=document.getElementById('application-access-table-body');
@@ -61,8 +136,7 @@ document.addEventListener('DOMContentLoaded',function(){
 	if(def)selectApp(def);
 });
 
-
-
+// Search filtering (generic)
 document.addEventListener('DOMContentLoaded',function(){
 	document.querySelectorAll('.modern-search-box input').forEach(inp=>{
 		inp.addEventListener('input',function(){
@@ -80,9 +154,8 @@ document.addEventListener('DOMContentLoaded',function(){
 	});
 });
 
-
 // Access Request actions with rejection modal
-
+document.addEventListener('DOMContentLoaded',function(){
 	const modalEl=document.getElementById('adminRejectConfirmModal');
 	const rejectIdSpan=document.getElementById('admin-reject-target-id');
 	const confirmBtn=document.getElementById('admin-confirm-reject-btn');
@@ -90,12 +163,24 @@ document.addEventListener('DOMContentLoaded',function(){
 	let pendingReject=null; let bsModal=null; if(modalEl){bsModal=new bootstrap.Modal(modalEl);} ;
 	ackBox && ackBox.addEventListener('change',()=>{confirmBtn.disabled=!ackBox.checked;});
 
-
-
+	function execute(row,eventId,action){
 		fetch('/action/update-event-status/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify({event_id:eventId,action})}).then(r=>r.json()).then(d=>{if(d.success){row.style.transition='opacity .5s';row.style.opacity=0;setTimeout(()=>row.remove(),500);}else{alert('Failed: '+(d.error||'Unknown'));}}).catch(()=>alert('Network error'));
+	}
 
-
-
+	document.querySelectorAll('.btn-action').forEach(btn=>{
+		btn.addEventListener('click',function(){
+			const row=this.closest('.request-item');
+			if(!row)return; const eventId=row.dataset.eventId; const action=this.dataset.action;
+			if(action==='reject'){
+				pendingReject={row,eventId};
 				rejectIdSpan.textContent=eventId; ackBox.checked=false; confirmBtn.disabled=true; bsModal && bsModal.show(); return;
+			}
+			execute(row,eventId,action);
+		});
+	});
 
+	confirmBtn && confirmBtn.addEventListener('click',function(){
 		if(!pendingReject)return; const {row,eventId}=pendingReject; bsModal && bsModal.hide(); execute(row,eventId,'reject'); pendingReject=null;});
+});
+</script>
+{% endblock %}
