@@ -1,9 +1,28 @@
-            {% if app_owner_events|length == 0 %}
-            <div class="empty-state text-center p-4 border rounded bg-light" style="color:#555;">
-                <div class="mb-2" style="font-size:1.05rem;font-weight:600;">No Pending Application Requests</div>
-                <div class="small text-muted">You're all caught up. New application related requests will appear here when assigned to you.</div>
-            </div>
-            {% endif %}
+        # Cooldown enforcement: block if a Certification Request for this employee exists within last 15 days
+        employee_email = hrms_row.get("business_email")
+        fifteen_days_ago = timezone.now() - timezone.timedelta(days=15)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT event_id, assigned_at
+                FROM event_status
+                WHERE event_type = %s
+                  AND event_description LIKE %s
+                  AND assigned_at >= %s
+                ORDER BY assigned_at DESC
+                LIMIT 1
+                """,
+                [ 'Certification Request', f'%{employee_email}%', fifteen_days_ago ]
+            )
+            recent = cursor.fetchone()
+        if recent:
+            msg = 'A certification request was already initiated for this user within the last 15 days.'
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': msg, 'cooldown': True})
+            return redirect('dashboard')  # Non-AJAX simple redirect (messaging system not implemented)
 
 
-    .empty-state { background:#fafafa; border:1px dashed #ccc !important; }
+
+
+
+            event_description=f'Certification requested for {employee_email}',
