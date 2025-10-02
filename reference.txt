@@ -1,59 +1,12 @@
-    requester_email = (request.user.email or '').lower()
-    hrms_all = get_hrms_list()
-    requester_row = next((r for r in hrms_all if (r.get('business_email') or '').lower() == requester_email), None)
-    requester_designation = (requester_row or {}).get('external_designation', '')
-    # Authorization: RA of employee OR CTO/CISO may initiate
-    if not (
-        requester_email == (hrms_row.get('ra_email') or '').lower() or
-        requester_designation in ['Chief Technology Officer', 'Chief Information Security Officer']
-    ):
+            {% if events|length == 0 %}
+            <div class="empty-state text-center p-4 border rounded bg-light" style="color:#555;">
+                <div class="mb-2" style="font-size:1.1rem;font-weight:600;">No Pending Access Requests</div>
+                <div class="small text-muted">You're all caught up. New requests needing your action will appear here.</div>
+            </div>
+            {% endif %}
 
 
-
-        # Initial routing logic similar to Grant flow
-        if requester_designation == 'Chief Technology Officer':
-            initial_assigned = 'CISO_APPROVAL'
-        elif requester_designation == 'Chief Information Security Officer':
-            initial_assigned = 'CTO_APPROVAL'  # Will skip CISO later
-        else:
-            initial_assigned = 'CTO_APPROVAL'
-
-
-            assigned_to=initial_assigned,
-
-
-            is_cert = 'Certification requested for' in (event_description or '') or event_description.startswith('Certification requested')
-            if not (is_grant or is_revoke or is_cert):
-
-
-
-                elif is_cert:
-                    # Certification flow: ONLY CTO & CISO stages, then final email.
-                    if current_assigned_to == 'CTO_APPROVAL':
-                        trig_row = next((r for r in hrms_rows if (r.get('business_email') or '').lower() == (original_triggered_by or '').lower()), None)
-                        trig_design = (trig_row or {}).get('external_designation', '')
-                        if trig_design == 'Chief Information Security Officer':
-                            # CISO initiated -> CTO approval completes workflow
-                            next_assigned_to = user_email
-                            new_status = 'Closed'
-                            final = True
-                        else:
-                            next_assigned_to = 'CISO_APPROVAL'
-                            new_status = 'open'
-                    elif current_assigned_to == 'CISO_APPROVAL':
-                        # Finalize after CISO approval
-                        next_assigned_to = user_email
-                        new_status = 'Closed'
-                        final = True
-                    else:
-                        return JsonResponse({'success': False, 'error': 'Invalid stage for certification flow'}, status=400)
-
-
-
-        # After transaction: send final notification email for certification closure
-        if final and is_cert and new_status.lower() == 'closed':
-            try:
-                html_body = f"<p>Certification workflow for event <strong>{event_id}</strong> has been completed successfully.</p>"
-                _send_email('Certification Workflow Completed', ['devan.travadi@nidohomefin.com'], html_body)
-            except Exception as mail_err:
-                logger.warning(f"Failed to send certification completion email: {mail_err}")
+    .empty-state {
+        background: #fafafa;
+        border: 1px dashed #ccc !important;
+    }
