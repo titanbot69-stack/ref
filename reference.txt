@@ -1,13 +1,5 @@
-.tile-grid{display:grid;gap:2rem;grid-template-columns:repeat(4,260px);margin:0 auto 1.2rem;max-width:calc(4*260px + 3*2rem);width:100%;justify-content:flex-start}
-/* Fixed four columns on wide screens; wrap after 4 so 5th starts next row. */
-@media (max-width:1300px){
-	/* When viewport narrower than total fixed width, reduce columns to avoid horizontal scroll */
-	.tile-grid{grid-template-columns:repeat(3,260px);max-width:calc(3*260px + 2*2rem)}
-}
-@media (max-width:1000px){
-	.tile-grid{grid-template-columns:repeat(2,260px);max-width:calc(2*260px + 1*2rem)}
-}
-@media (max-width:560px){
-	.tile-grid{grid-template-columns:repeat(1,260px);max-width:260px;gap:1.25rem}
-	.ws-tile{min-height:160px}
-}
+   # Determine if this RA also holds CTO or CISO designation (executive approver)
+    hrms_row = next((r for r in all_rows if (r.get('business_email') or '').lower() == email), None)
+    external_designation = (hrms_row or {}).get('external_designation', '')
+    show_access_requests = external_designation in ['Chief Technology Officer', 'Chief Information Security Officer']
+ 
