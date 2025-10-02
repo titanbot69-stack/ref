@@ -1,12 +1,9 @@
-            {% if events|length == 0 %}
+            {% if app_owner_events|length == 0 %}
             <div class="empty-state text-center p-4 border rounded bg-light" style="color:#555;">
-                <div class="mb-2" style="font-size:1.1rem;font-weight:600;">No Pending Access Requests</div>
-                <div class="small text-muted">You're all caught up. New requests needing your action will appear here.</div>
+                <div class="mb-2" style="font-size:1.05rem;font-weight:600;">No Pending Application Requests</div>
+                <div class="small text-muted">You're all caught up. New application related requests will appear here when assigned to you.</div>
             </div>
             {% endif %}
 
 
-    .empty-state {
-        background: #fafafa;
-        border: 1px dashed #ccc !important;
-    }
+    .empty-state { background:#fafafa; border:1px dashed #ccc !important; }
