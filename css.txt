@@ -1,75 +1,46 @@
-    # Will fetch original request info (triggered_by etc.) for email notification
-    original_triggered_by = None
-    original_description = ''
-    original_event_type = ''
-    original_application = ''
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                SELECT triggered_by, event_description, event_type, application
-                FROM event_status
-                WHERE event_id = %s
-                """,
-                [event_id]
-            )
-            row = cursor.fetchone()
-            if row:
-                original_triggered_by, original_description, original_event_type, original_application = row
-    except Exception as meta_err:
-        logger.warning(f"Could not fetch original event for email meta (event {event_id}): {meta_err}")
+    {# Applications section #}
+    {% if applications %}
+    <div style="max-width:1250px;margin:2.2rem auto 0;width:100%;">
+      <h2 style="font-size:1.55rem;font-weight:700;letter-spacing:.5px;margin:0 0 1.1rem;background:linear-gradient(90deg,#0f172a,#334155);-webkit-background-clip:text;color:transparent;">Applications</h2>
+      <div class="tile-grid" style="margin-bottom:1.5rem;">
+        {% for app in applications %}
+          <a class="ws-tile ws-app" href="{{ app.href }}" target="_blank" rel="noopener" aria-label="{{ app.name }} Application">
+            <div class="tile-icon" style="background:#fff;border:1px solid #e3e9ef;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+              {% if app.image %}
+                <img src="{% static 'images/' %}{{ app.image }}" alt="{{ app.name }}" style="max-width:100%;max-height:100%;object-fit:contain;">
+              {% else %}
+                <i class="bi bi-{{ app.icon }}" style="color:#ff6b2e;"></i>
+              {% endif %}
+            </div>
+            <div class="tile-body">
+              <h3 class="tile-title">{{ app.name }}</h3>
+              <p class="tile-sub">Launch {{ app.name }} platform</p>
+            </div>
+            <div class="tile-arrow"><i class="bi bi-box-arrow-up-right"></i></div>
+          </a>
+        {% empty %}
+          <div style="font-size:.85rem;color:#6b7a89;">No application access detected.</div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
 
 
 
-        # Attempt to send final notification email to the RA (original requester)
-        email_sent = False
-        try:
-            ra_email = (original_triggered_by or '').strip()
-            if ra_email and '@' in ra_email:
-                outcome_label = 'Completed' if action == 'mark-done' else 'Rejected'
-                subject = f"Access Request {event_id} {outcome_label}"
-                context = {
-                    'event_id': event_id,
-                    'outcome': outcome_label,
-                    'description': original_description,
-                    'performed_by': request.user.email,
-                    'performed_at': assigned_at,
-                    'application': original_application,
-                    'event_type': original_event_type,
-                }
-                html_body = render(request, 'emails/final_request_outcome.html', context).content.decode('utf-8')
-                text_body = (
-                    f"Your access request (ID {event_id}) has been {outcome_label}.\n"
-                    f"Application: {original_application or 'N/A'}\n"
-                    f"Type: {original_event_type or 'N/A'}\n"
-                    f"Description: {original_description or ''}\n"
-                    f"Actioned By: {request.user.email} at {assigned_at.strftime('%Y-%m-%d %H:%M:%S')}"
-                )
-                try:
-                    _send_email(subject, [ra_email], html_body, text_body)
-                    email_sent = True
-                except Exception as mail_err:
-                    logger.error(f"Failed to send final outcome email for event {event_id}: {mail_err}")
-        except Exception as notify_err:
-            logger.error(f"Notification assembly failed for event {event_id}: {notify_err}")
 
-        return JsonResponse({'success': True, 'email_sent': email_sent})
+    # Determine application presence from dummy presence function
+    presence = presence_for_email(email)
+    raw_apps = [
+        {'key': 'rpulse', 'name': 'RPulse', 'icon': 'activity', 'image': 'rpulse.png', 'href': 'https://rpulse.example.com'},
+        {'key': 'dre', 'name': 'DRE', 'icon': 'cpu', 'image': 'dre.png', 'href': 'https://dre.example.com'},
+        {'key': 'ingenious', 'name': 'Ingenious', 'icon': 'lightbulb', 'image': 'ingenious.png', 'href': 'https://ingenious.example.com'},
+        {'key': 'exponentia', 'name': 'Exponentia', 'icon': 'layers', 'image': 'exponentia.png', 'href': 'https://exponentia.example.com'},
+        {'key': 'neo', 'name': 'NEO', 'icon': 'grid', 'image': 'neo.png', 'href': 'https://neo.example.com'},
+        {'key': 'dlp', 'name': 'DLP', 'icon': 'shield-lock', 'image': 'dlp.png', 'href': 'https://dlp.example.com'},
+    ]
+    accessible_apps = [a for a in raw_apps if presence.get(a['key'])]
 
 
-<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#333;">
-  <h3 style="margin-top:0;">Access Request Update</h3>
-  <p style="margin:0 0 10px;">Hello,</p>
-  <p style="margin:0 0 10px;">Your access request has reached a final decision from the Application Owner.</p>
-  <table cellpadding="6" cellspacing="0" style="border-collapse:collapse;border:1px solid #ddd;font-size:13px;">
-    <tr style="background:#f7f7f7;"><th align="left" style="border:1px solid #ddd;">Event ID</th><td style="border:1px solid #ddd;">{{ event_id }}</td></tr>
-    <tr><th align="left" style="border:1px solid #ddd;">Outcome</th><td style="border:1px solid #ddd;">{{ outcome }}</td></tr>
-    <tr><th align="left" style="border:1px solid #ddd;">Event Type</th><td style="border:1px solid #ddd;">{{ event_type }}</td></tr>
-    <tr><th align="left" style="border:1px solid #ddd;">Application</th><td style="border:1px solid #ddd;">{{ application|default:'N/A' }}</td></tr>
-    <tr><th align="left" style="border:1px solid #ddd;">Actioned By</th><td style="border:1px solid #ddd;">{{ performed_by }}</td></tr>
-    <tr><th align="left" style="border:1px solid #ddd;">Actioned At</th><td style="border:1px solid #ddd;">{{ performed_at }}</td></tr>
-  </table>
-  <p style="margin:15px 0 5px;">Description:</p>
-  <blockquote style="margin:0 0 15px;border-left:4px solid #ff8c1a;padding:6px 10px;background:#fff8f2;">{{ description }}</blockquote>
-  <p style="font-size:12px;color:#777;margin:0;">This is an automated notification. No further action is required.</p>
-</div>
-
+        # Applications section: build list of applications user actually has access to (presence True)
+        'applications': accessible_apps,
+ 
