@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded',function(){
 	const apps=['rpulse','dre','ingenious','exponentia','neo','dlp'];
 	let baselinePresence={};
 	let baselineLoaded=false;
+	let fetchController=null;
+	let pendingSubmitClick=false;
 	let targetEmpCode='';
 	const empSpanConfirm=document.getElementById('rev-confirm-emp');
 	const changeList=document.getElementById('rev-change-list');
@@ -24,25 +26,41 @@ document.addEventListener('DOMContentLoaded',function(){
 		div.textContent=msg;holder.appendChild(div);setTimeout(()=>div.remove(),3500);
 	}
 
-	revokeModal.addEventListener('show.bs.modal',async ev=>{
-		const btn=ev.relatedTarget;baselinePresence={};baselineLoaded=false;errorBox.classList.add('d-none');errorBox.textContent='';
+	revokeModal.addEventListener('show.bs.modal',ev=>{
+		if(baselineLoaded){return;} // reuse baseline when returning from confirm
+		const btn=ev.relatedTarget;baselinePresence={};baselineLoaded=false;pendingSubmitClick=false;errorBox.classList.add('d-none');errorBox.textContent='';
+		if(fetchController){fetchController.abort();}
+		fetchController=new AbortController();
 		targetEmpCode=btn.getAttribute('data-emp');const email=btn.getAttribute('data-email');
 		document.getElementById('rev-emp').value=targetEmpCode;document.getElementById('rev-email').textContent=email;
-		const submitBtn=document.getElementById('rev-submit'); if(submitBtn){submitBtn.disabled=true; submitBtn.dataset.loading='1';}
-		try{
-			const res=await fetch(`/api/hrms/${targetEmpCode}/presence/`);
-			const data=await res.json();
+		const submitBtn=document.getElementById('rev-submit');
+		const overlay=document.getElementById('rev-loading-overlay');
+		if(submitBtn){submitBtn.disabled=true; submitBtn.dataset.loading='1';}
+		overlay&& (overlay.style.display='flex');
+		fetch(`/api/hrms/${targetEmpCode}/presence/`,{signal:fetchController.signal}).then(r=>r.ok?r.json():Promise.reject('status')).then(data=>{
 			baselinePresence=data.presence||{};
 			apps.forEach(k=>{const el=document.getElementById('chk-'+k);if(!el)return;const has=!!baselinePresence[k];el.checked=has;el.dataset.base=has?'1':'0';});
 			baselineLoaded=true;
-		}catch(e){
+			if(pendingSubmitClick){document.getElementById('rev-submit').click();}
+		}).catch(err=>{
+			if(err==='AbortError') return;
 			apps.forEach(k=>{const el=document.getElementById('chk-'+k);if(!el)return;el.checked=false;el.dataset.base='0';});
 			baselinePresence={};baselineLoaded=true;
-		}finally{if(submitBtn){submitBtn.disabled=false;submitBtn.removeAttribute('data-loading');}}
+			showToast('Could not load current access (using empty baseline)','warning');
+			if(pendingSubmitClick){document.getElementById('rev-submit').click();}
+		}).finally(()=>{
+			if(submitBtn){submitBtn.disabled=false;submitBtn.removeAttribute('data-loading');}
+			overlay&& (overlay.style.display='none');
+		});
+	});
+	revokeModal.addEventListener('hidden.bs.modal',()=>{
+		if(fetchController){fetchController.abort();}
+		fetchController=null;
+		baselineLoaded=false; baselinePresence={}; pendingSubmitClick=false;
 	});
 
 	document.getElementById('rev-submit').addEventListener('click',function(){
-		if(!baselineLoaded){showToast('Still loading current access. Please wait...','warning');return;}
+		if(!baselineLoaded){pendingSubmitClick=true;showToast('Loading access… will open confirmation shortly','info');return;}
 		// Build change summary
 		const changes=[];
 		apps.forEach(k=>{const el=document.getElementById('chk-'+k); if(!el)return; const newVal=el.checked; const oldVal=el.dataset.base==='1'; if(newVal!==oldVal){changes.push({app:k, action:newVal?'Grant':'Revoke'});} });
