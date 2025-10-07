@@ -1,47 +1,10 @@
-<!-- Revoke / Grant Confirmation Modal -->
-<div class="modal fade" id="revConfirmModal" tabindex="-1" aria-hidden="true">
-	<div class="modal-dialog modal-dialog-centered modal-md modal-recert">
-		<div class="modal-content shadow-lg border-0">
-			<div class="modal-header gradient-header py-2">
-				<h6 class="modal-title d-flex align-items-center mb-0"><i class="fas fa-user-lock me-2"></i>Confirm Access Changes</h6>
-				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-			</div>
-			<div class="modal-body py-3 small">
-				<div class="info-box mb-3">
-					<div class="d-flex align-items-start">
-						<div class="icon-wrap me-2"><i class="fas fa-exchange-alt"></i></div>
-						<div class="flex-grow-1 lh-sm">
-							Review the changes you are about to submit. <strong>Grant</strong> will create access request(s); <strong>Revoke</strong> will initiate removal workflow(s). If an open request already exists for an application, submission will be blocked for that app.
-						</div>
-					</div>
-				</div>
-				<div class="mb-2"><span class="text-muted">Employee:</span> <span id="rev-confirm-emp" class="fw-semibold"></span></div>
-				<ul id="rev-change-list" class="list-unstyled mb-3 changes-list"></ul>
-				<div id="rev-error-box" class="alert alert-danger py-2 px-3 d-none mb-2"></div>
-				<div class="form-check mb-1">
-					<input class="form-check-input" type="checkbox" id="ack-rev-changes">
-					<label class="form-check-label" for="ack-rev-changes">I confirm these access changes are intentional.</label>
-				</div>
-				<div class="text-muted small">A separate event will be logged per application change.</div>
-			</div>
-			<div class="modal-footer py-2 gap-2 flex-nowrap">
-				<button type="button" class="btn btn-light btn-sm border" id="rev-back-btn">Back</button>
-				<button type="button" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2" id="rev-confirm-btn" disabled>
-					<span class="spinner-border spinner-border-sm d-none" id="rev-confirm-spinner"></span>
-					<span class="btn-text">Submit Changes</span>
-				</button>
-			</div>
-		</div>
-	</div>
-</div>
-
-
 document.addEventListener('DOMContentLoaded',function(){
 	const revokeModal=document.getElementById('revokeModal');
 	const confirmModal=document.getElementById('revConfirmModal');
 	if(!revokeModal||!confirmModal) return;
 	const apps=['rpulse','dre','ingenious','exponentia','neo','dlp'];
 	let baselinePresence={};
+	let baselineLoaded=false;
 	let targetEmpCode='';
 	const empSpanConfirm=document.getElementById('rev-confirm-emp');
 	const changeList=document.getElementById('rev-change-list');
@@ -62,22 +25,28 @@ document.addEventListener('DOMContentLoaded',function(){
 	}
 
 	revokeModal.addEventListener('show.bs.modal',async ev=>{
-		const btn=ev.relatedTarget;baselinePresence={};errorBox.classList.add('d-none');errorBox.textContent='';
+		const btn=ev.relatedTarget;baselinePresence={};baselineLoaded=false;errorBox.classList.add('d-none');errorBox.textContent='';
 		targetEmpCode=btn.getAttribute('data-emp');const email=btn.getAttribute('data-email');
 		document.getElementById('rev-emp').value=targetEmpCode;document.getElementById('rev-email').textContent=email;
-		try{const res=await fetch(`/api/hrms/${targetEmpCode}/presence/`);const data=await res.json();baselinePresence=data.presence||{};apps.forEach(k=>{const el=document.getElementById('chk-'+k);if(el)el.checked=!!baselinePresence[k];});}
-		catch(e){apps.forEach(k=>{const el=document.getElementById('chk-'+k);if(el)el.checked=false;});baselinePresence={};}
+		const submitBtn=document.getElementById('rev-submit'); if(submitBtn){submitBtn.disabled=true; submitBtn.dataset.loading='1';}
+		try{
+			const res=await fetch(`/api/hrms/${targetEmpCode}/presence/`);
+			const data=await res.json();
+			baselinePresence=data.presence||{};
+			apps.forEach(k=>{const el=document.getElementById('chk-'+k);if(!el)return;const has=!!baselinePresence[k];el.checked=has;el.dataset.base=has?'1':'0';});
+			baselineLoaded=true;
+		}catch(e){
+			apps.forEach(k=>{const el=document.getElementById('chk-'+k);if(!el)return;el.checked=false;el.dataset.base='0';});
+			baselinePresence={};baselineLoaded=true;
+		}finally{if(submitBtn){submitBtn.disabled=false;submitBtn.removeAttribute('data-loading');}}
 	});
 
 	document.getElementById('rev-submit').addEventListener('click',function(){
+		if(!baselineLoaded){showToast('Still loading current access. Please wait...','warning');return;}
 		// Build change summary
 		const changes=[];
-		apps.forEach(k=>{
-			const el=document.getElementById('chk-'+k); if(!el) return; const newVal=el.checked; const oldVal=!!baselinePresence[k];
-			if(newVal!==oldVal){changes.push({app:k, action:newVal?'Grant':'Revoke'});}
-		});
+		apps.forEach(k=>{const el=document.getElementById('chk-'+k); if(!el)return; const newVal=el.checked; const oldVal=el.dataset.base==='1'; if(newVal!==oldVal){changes.push({app:k, action:newVal?'Grant':'Revoke'});} });
 		if(!changes.length){showToast('No changes detected','warning');return;}
-		// Populate summary list
 		changeList.innerHTML=changes.map(c=>`<li class="mb-1 d-flex align-items-center gap-2"><span class="badge bg-${c.action==='Grant'?'success':'danger'} flex-shrink-0" style="min-width:62px;">${c.action}</span><span class="text-capitalize">${c.app}</span></li>`).join('');
 		empSpanConfirm.textContent=targetEmpCode; ackBox.checked=false; confirmBtn.disabled=true; errorBox.classList.add('d-none');
 		bootstrap.Modal.getInstance(revokeModal).hide();
