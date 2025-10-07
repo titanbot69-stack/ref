@@ -4,10 +4,8 @@ document.addEventListener('DOMContentLoaded',function(){
 	if(!revokeModal||!confirmModal) return;
 	const apps=['rpulse','dre','ingenious','exponentia','neo','dlp'];
 	let baselinePresence={};
-	let baselineLoaded=false;
-	let fetchController=null;
-	let pendingSubmitClick=false;
 	let targetEmpCode='';
+	let lastSubmissionFailed=false;
 	const empSpanConfirm=document.getElementById('rev-confirm-emp');
 	const changeList=document.getElementById('rev-change-list');
 	const ackBox=document.getElementById('ack-rev-changes');
@@ -25,57 +23,32 @@ document.addEventListener('DOMContentLoaded',function(){
 		div.className='alert alert-'+(type==='danger'||type==='error'?'danger':type)+' py-2 px-3 mb-2 shadow-sm';
 		div.textContent=msg;holder.appendChild(div);setTimeout(()=>div.remove(),3500);
 	}
-
-	revokeModal.addEventListener('show.bs.modal',ev=>{
-		if(baselineLoaded){return;} // reuse baseline when returning from confirm
-		const btn=ev.relatedTarget;baselinePresence={};baselineLoaded=false;pendingSubmitClick=false;errorBox.classList.add('d-none');errorBox.textContent='';
-		if(fetchController){fetchController.abort();}
-		fetchController=new AbortController();
+	revokeModal.addEventListener('show.bs.modal',async ev=>{
+		const btn=ev.relatedTarget;baselinePresence={};errorBox.classList.add('d-none');errorBox.textContent='';
 		targetEmpCode=btn.getAttribute('data-emp');const email=btn.getAttribute('data-email');
 		document.getElementById('rev-emp').value=targetEmpCode;document.getElementById('rev-email').textContent=email;
-		const submitBtn=document.getElementById('rev-submit');
-		const overlay=document.getElementById('rev-loading-overlay');
-		if(submitBtn){submitBtn.disabled=true; submitBtn.dataset.loading='1';}
-		overlay&& (overlay.style.display='flex');
-		fetch(`/api/hrms/${targetEmpCode}/presence/`,{signal:fetchController.signal}).then(r=>r.ok?r.json():Promise.reject('status')).then(data=>{
-			baselinePresence=data.presence||{};
-			apps.forEach(k=>{const el=document.getElementById('chk-'+k);if(!el)return;const has=!!baselinePresence[k];el.checked=has;el.dataset.base=has?'1':'0';});
-			baselineLoaded=true;
-			if(pendingSubmitClick){document.getElementById('rev-submit').click();}
-		}).catch(err=>{
-			if(err==='AbortError') return;
-			apps.forEach(k=>{const el=document.getElementById('chk-'+k);if(!el)return;el.checked=false;el.dataset.base='0';});
-			baselinePresence={};baselineLoaded=true;
-			showToast('Could not load current access (using empty baseline)','warning');
-			if(pendingSubmitClick){document.getElementById('rev-submit').click();}
-		}).finally(()=>{
-			if(submitBtn){submitBtn.disabled=false;submitBtn.removeAttribute('data-loading');}
-			overlay&& (overlay.style.display='none');
-		});
+		try{const res=await fetch(`/api/hrms/${targetEmpCode}/presence/`);const data=await res.json();baselinePresence=data.presence||{};apps.forEach(k=>{const el=document.getElementById('chk-'+k);if(el)el.checked=!!baselinePresence[k];});}
+		catch(e){apps.forEach(k=>{const el=document.getElementById('chk-'+k);if(el)el.checked=false;});baselinePresence={};}
 	});
-	revokeModal.addEventListener('hidden.bs.modal',()=>{
-		if(fetchController){fetchController.abort();}
-		fetchController=null;
-		baselineLoaded=false; baselinePresence={}; pendingSubmitClick=false;
-	});
-
 	document.getElementById('rev-submit').addEventListener('click',function(){
-		if(!baselineLoaded){pendingSubmitClick=true;showToast('Loading access… will open confirmation shortly','info');return;}
 		// Build change summary
 		const changes=[];
-		apps.forEach(k=>{const el=document.getElementById('chk-'+k); if(!el)return; const newVal=el.checked; const oldVal=el.dataset.base==='1'; if(newVal!==oldVal){changes.push({app:k, action:newVal?'Grant':'Revoke'});} });
+		apps.forEach(k=>{
+			const el=document.getElementById('chk-'+k); if(!el) return; const newVal=el.checked; const oldVal=!!baselinePresence[k];
+			if(newVal!==oldVal){changes.push({app:k, action:newVal?'Grant':'Revoke'});}
+		});
 		if(!changes.length){showToast('No changes detected','warning');return;}
+		// Populate summary list
 		changeList.innerHTML=changes.map(c=>`<li class="mb-1 d-flex align-items-center gap-2"><span class="badge bg-${c.action==='Grant'?'success':'danger'} flex-shrink-0" style="min-width:62px;">${c.action}</span><span class="text-capitalize">${c.app}</span></li>`).join('');
 		empSpanConfirm.textContent=targetEmpCode; ackBox.checked=false; confirmBtn.disabled=true; errorBox.classList.add('d-none');
 		bootstrap.Modal.getInstance(revokeModal).hide();
 		bsConfirm.show();
 	});
-
 	ackBox && ackBox.addEventListener('change',()=>{confirmBtn.disabled=!ackBox.checked;});
-	backBtn && backBtn.addEventListener('click',()=>{bsConfirm.hide();bsRevoke.show();});
+	backBtn && backBtn.addEventListener('click',()=>{bsConfirm.hide(); if(!lastSubmissionFailed){ bsRevoke.show(); }});
 
 	confirmBtn && confirmBtn.addEventListener('click',async()=>{
-		confirmBtn.disabled=true; spinner.classList.remove('d-none'); errorBox.classList.add('d-none'); errorBox.textContent='';
+		confirmBtn.disabled=true; spinner.classList.remove('d-none'); errorBox.classList.add('d-none'); errorBox.textContent=''; lastSubmissionFailed=false;
 		// Prepare form data
 		const fd=new FormData(document.getElementById('revokeForm'));
 		apps.forEach(k=>fd.set(k,document.getElementById('chk-'+k).checked?'true':'false'));
@@ -83,12 +56,13 @@ document.addEventListener('DOMContentLoaded',function(){
 			const res=await fetch('/action/revoke-access/',{method:'POST',headers:{'X-CSRFToken':getCookie('csrftoken')},body:fd});
 			const data=await res.json().catch(()=>({}));
 			if(res.ok && data && (data.ok||data.success)){
-				bsConfirm.hide(); showToast('Request submitted');
+				bsConfirm.hide(); showToast('Request submitted'); lastSubmissionFailed=false;
 			} else {
+				lastSubmissionFailed=true;
 				const msg=(data && (data.error||data.message)) || 'Request failed';
 				errorBox.textContent=msg; errorBox.classList.remove('d-none'); confirmBtn.disabled=false;
 			}
-		}catch(e){errorBox.textContent='Network error'; errorBox.classList.remove('d-none'); confirmBtn.disabled=false;}
+		}catch(e){errorBox.textContent='Network error'; errorBox.classList.remove('d-none'); confirmBtn.disabled=false; lastSubmissionFailed=true;}
 		finally{spinner.classList.add('d-none');}
 	});
 });
