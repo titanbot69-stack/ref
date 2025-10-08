@@ -1,27 +1,63 @@
-<h3>Certification Cycle Request</h3>
-<p>Dear CTO,</p>
-<p>The CISO ({{ requested_by }}) is requesting initiation of a new access certification cycle as of {{ ts }}.</p>
-<p>Please review recent activity and, if appropriate, initiate the certification process. This request will be blocked if a cycle was initiated within the last 15 days.</p>
-<p><strong>Reason (optional):</strong> {{ reason|default:"Not provided" }}</p>
-<p>Regards,<br/>IAM Automation Service</p>
+        # Notify original RA (triggered_by) about progress
+        try:
+            # Determine RA name (best-effort)
+            hrms_rows_notify = get_hrms_list()
+            trig_row_full = next((r for r in hrms_rows_notify if (r.get('business_email') or '').lower() == (original_triggered_by or '').lower()), None)
+            ra_name = (trig_row_full or {}).get('first_name') or (original_triggered_by or 'Requester')
+            # Determine request type & target user from description
+            request_type = 'Grant' if is_grant else 'Revoke'
+            # Extract target user email (after 'for ' and before ' on') simplistic parse
+            target_user = ''
+            if ' for ' in (event_description or '') and ' on ' in (event_description or ''):
+                try:
+                    segment = event_description.split(' for ',1)[1]
+                    target_user = segment.split(' on ',1)[0].strip()
+                except Exception:
+                    target_user = ''
+            stage_label = current_assigned_to.replace('_',' ').title()
+            action_display = 'Rejected' if action == 'reject' else 'Accepted'
+            status_now = new_status
+            # Next stage label (for informative email)
+            next_stage = 'None (Request Closed)' if final else next_assigned_to.replace('_',' ').title()
+            # Derive application name from description (between ' on ' and ' application')
+            application_name = ''
+            if ' on ' in (event_description or '') and ' application' in (event_description or ''):
+                try:
+                    application_name = event_description.split(' on ',1)[1].split(' application',1)[0]
+                except Exception:
+                    application_name = ''
+            html = render(request, 'emails/request_progress_update.html', {
+                'ra_name': ra_name,
+                'request_type': request_type,
+                'target_user': target_user,
+                'application_name': application_name,
+                'stage_label': stage_label,
+                'actor': request.user.email,
+                'action_display': action_display,
+                'status_now': status_now,
+                'final': final,
+                'next_stage': next_stage,
+                'event_description': event_description,
+            }).content.decode('utf-8')
+            # _send_email('Access Request Update', [original_triggered_by], html)
+            print(f"[Email Simulated] Progress update sent to {original_triggered_by} for {event_id}")
+        except Exception as notify_err:
+            logger.warning(f"Failed to send progress update email for {event_id}: {notify_err}")
 
 
 
-            WHERE (event_type = 'CERTIFICATION_INITIATED' OR event_type = 'CERTIFICATION_REQUESTED')
-
-
-            msg = 'Certification already initiated or requested within last 15 days.'
-
-                return JsonResponse({'ok': False, 'error': msg}, status=400)
-
-
-    # Prepare and (optionally) send email to CTO
-    cto_row = next((r for r in get_hrms_list() if (r.get('external_designation') or '') == 'Chief Technology Officer'), None)
-    cto_email = (cto_row or {}).get('business_email') or 'cto@example.com'
-    html = render(request, 'emails/request_certification.html', {
-        'requested_by': request.user.email,
-        'ts': timezone.now(),
-        'reason': request.GET.get('reason') or request.POST.get('reason') or ''
-    }).content.decode('utf-8')
-    # _send_email('Certification Cycle Request', [cto_email], html)
-    print(f'Request Certification email (simulated) to {cto_email}')
+<h3>Access Request Update</h3>
+<p>Hi {{ ra_name }},</p>
+<p>Your {{ request_type }} for <strong>{{ target_user }}</strong> (Application: {{ application_name }}) has advanced a step.</p>
+<p><strong>Stage:</strong> {{ stage_label }}<br/>
+<strong>Action Taken By:</strong> {{ actor }}<br/>
+<strong>Action:</strong> {{ action_display }}<br/>
+<strong>Status Now:</strong> {{ status_now }}
+</p>
+{% if final %}
+<p>This request is now <strong>{{ status_now }}</strong>. No further action is required.</p>
+{% else %}
+<p>The request is moving to the next stage: <strong>{{ next_stage }}</strong>. You'll receive another update when it changes again.</p>
+{% endif %}
+<p>Description (for reference):<br/>{{ event_description }}</p>
+<p>Regards,<br/>IAM Workflow Engine</p>
