@@ -11,7 +11,18 @@
     if external_designation == 'Chief Information Security Officer':
         return HttpResponseForbidden('CISO cannot directly initiate certification')
 
-
+        # Cooldown check (15 days): look for last CERTIFICATION_INITIATED within 15 days
+        fifteen_days_ago = timezone.now() - timezone.timedelta(days=15)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT 1 FROM event_status
+                WHERE event_type = 'CERTIFICATION_INITIATED'
+                  AND triggered_at >= %s
+                LIMIT 1
+                """,
+                [fifteen_days_ago]
+            )
             if cursor.fetchone():
                 if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                     return JsonResponse({'ok': False, 'error': 'A certification cycle was initiated in the last 15 days.'}, status=400)
