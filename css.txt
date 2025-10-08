@@ -1,6 +1,117 @@
-            # Include employee department (role) for uniqueness & traceability
-            dept = hrms_row.get('role') or hrms_row.get('internal_designation') or ''
-            dept_part = f" ({dept})" if dept else ''
+    is_cto = external_designation == 'Chief Technology Officer'
+    is_ciso = external_designation == 'Chief Information Security Officer'
+    is_legacy_admin = email == 'admin@test.com'
+
+        'is_cto': is_cto,
+        'is_ciso': is_ciso,
+        'is_legacy_admin': is_legacy_admin,
 
 
-                f"for {hrms_row.get('business_email')}{dept_part} on {app_name} application"
+    # CISO must not directly initiate; handled by separate request endpoint
+    if external_designation == 'Chief Information Security Officer':
+        return HttpResponseForbidden('CISO cannot directly initiate certification')
+
+
+            if cursor.fetchone():
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({'ok': False, 'error': 'A certification cycle was initiated in the last 15 days.'}, status=400)
+                return redirect('admin-dashboard')
+
+        last_event_id = None
+
+
+            user_role='CTO' if external_designation == 'Chief Technology Officer' else 'Admin',
+
+                [fail_event, 'Certification Email Failed', request.user.email or '', timezone.now(), f'FAILED: {str(e)}']
+
+
+
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'ok': False, 'error': 'Failed to initiate certification.'}, status=500)
+        return redirect('admin-dashboard')
+
+@login_required
+def request_certification(request):
+    """CISO-only: request CTO to initiate a certification cycle via email/notification with cooldown check."""
+    user_email = (request.user.email or '').lower()
+    hrms_row = next((r for r in get_hrms_list() if (r.get('business_email') or '').lower() == user_email), None)
+    external_designation = (hrms_row or {}).get('external_designation', '')
+    if external_designation != 'Chief Information Security Officer':
+        return HttpResponseForbidden('Only CISO can request certification')
+    fifteen_days_ago = timezone.now() - timezone.timedelta(days=15)
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT 1 FROM event_status
+            WHERE event_type = 'CERTIFICATION_INITIATED'
+              AND triggered_at >= %s
+            LIMIT 1
+            """,
+            [fifteen_days_ago]
+        )
+        if cursor.fetchone():
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'ok': False, 'error': 'Recent certification already initiated within 15 days.'}, status=400)
+            return redirect('admin-dashboard')
+    # Simulate email to CTO
+    print('Request Certification: email to CTO (simulated)')
+    req_event = log_event(
+        event_type='CERTIFICATION_REQUESTED',
+        triggered_by=request.user.email or '',
+        event_description='CISO requested CTO to initiate certification cycle.',
+        status='PENDING',
+        severity_level='INFO',
+        user_role='CISO',
+        assigned_to='CTO_APPROVAL',
+        assigned_at=timezone.now(),
+        application='NIDO'
+    )
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO event_history (event_id, action, performed_by, performed_at, status_after_action)
+            VALUES (%s, %s, %s, %s, %s)
+            """,
+            [req_event, 'Certification Request Sent', request.user.email or '', timezone.now(), 'REQUESTED']
+        )
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'ok': True, 'message': 'Request sent to CTO.'})
+    return redirect('admin-dashboard')
+
+
+
+
+	{# Only CTO or legacy admin sees Initiate; CISO sees Request #}
+	{% if is_cto or is_legacy_admin %}
+	<button id="initiate-cert-btn" class="btn btn-primary" style="background:#ff512f;border-color:#ff512f" data-action="initiate">Initiate Certification</button>
+	{% elif is_ciso %}
+	<button id="request-cert-btn" class="btn btn-primary" style="background:#ff512f;border-color:#ff512f" data-action="request">Request Certification</button>
+
+
+
+
+	// Certification buttons (CTO initiate / CISO request)
+	function handleCert(action, url){
+		const btn = action==='initiate'?document.getElementById('initiate-cert-btn'):document.getElementById('request-cert-btn');
+		if(!btn) return;
+		btn.addEventListener('click', function(){
+			if(action==='request'){
+				if(!confirm('Send a request to CTO to initiate a new certification cycle?')) return;
+			}else{
+				if(!confirm('Initiate a new certification cycle now?')) return;
+			}
+			btn.disabled = true; const orig = btn.textContent; btn.textContent = 'Processing...';
+			fetch(url, {headers:{'X-Requested-With':'XMLHttpRequest'}}).then(r=>r.json()).then(d=>{
+				if(!d.ok){ alert(d.error||'Operation blocked'); }
+				else { alert(d.message||'Done'); }
+			}).catch(()=>alert('Network error')).finally(()=>{btn.disabled=false;btn.textContent=orig;});
+		});
+	}
+	handleCert('initiate','/action/initiate-certification/');
+	handleCert('request','/action/request-certification/');
+
+
+
+
+    path('action/request-certification/', views.request_certification, name='request-certification'),
