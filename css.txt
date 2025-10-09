@@ -1,26 +1,47 @@
-    const confirmRejectBtn = document.getElementById('app-owner-confirm-reject-btn');
+				<div class="mb-2">
+					<label for="ra-reject-remark" class="form-label small mb-1">Remark (required, max 150 chars)</label>
+					<textarea id="ra-reject-remark" class="form-control form-control-sm" rows="2" maxlength="150" placeholder="Write the reason for rejection..."></textarea>
+					<div class="form-text small"><span id="ra-reject-remark-count">0</span>/150</div>
+				</div>
 
 
-    const remarkInput = document.getElementById('app-owner-reject-remark');
-    const remarkCount = document.getElementById('app-owner-reject-remark-count');
+
+	function executeAction(row,eventId,action,remark){
 
 
-        function syncRejectEnable(){
-            const text=(remarkInput?.value||'').trim();
-            if(remarkCount) remarkCount.textContent=String(text.length);
-            if(confirmRejectBtn) confirmRejectBtn.disabled = !(ackBox?.checked && text.length>0 && text.length<=150);
-        }
-        if(ackBox){ ackBox.addEventListener('change', syncRejectEnable); }
-        if(remarkInput){ remarkInput.addEventListener('input', syncRejectEnable); }
+
+			body: JSON.stringify(Object.assign({event_id: eventId, action}, action==='reject'?{remark:(remark||'').trim()}:{}))
 
 
-                body: JSON.stringify(Object.assign({ event_id: eventId, action: action }, action==='reject'?{ remark: (remarkInput?.value||'').trim() }:{}))
+
+			const remarkInput=document.getElementById('ra-reject-remark');
+			const remarkCount=document.getElementById('ra-reject-remark-count');
 
 
-                if(remarkInput){ remarkInput.value=''; }
-                if(remarkCount){ remarkCount.textContent='0'; }
+
+			if(remarkInput){ remarkInput.value=''; remarkCount && (remarkCount.textContent='0'); }
 
 
-                const text=(remarkInput?.value||'').trim();
-                if(!text || text.length>150){ return; }
- 
+
+
+
+	// Enable/disable confirm based on ack + remark
+	(function(){
+		const remarkInput=document.getElementById('ra-reject-remark');
+		const remarkCount=document.getElementById('ra-reject-remark-count');
+		function sync(){
+			const text=(remarkInput?.value||'').trim();
+			if(remarkCount) remarkCount.textContent=String(text.length);
+			confirmBtn && (confirmBtn.disabled=!(ackBox.checked && text.length>0 && text.length<=150));
+		}
+		ackBox && ackBox.addEventListener('change',sync);
+		remarkInput && remarkInput.addEventListener('input',sync);
+	})();
+
+
+
+		const remark=(document.getElementById('ra-reject-remark')?.value||'').trim();
+		if(!remark||remark.length>150) return;
+
+
+		executeAction(row,eventId,'reject',remark);
