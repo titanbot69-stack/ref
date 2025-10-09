@@ -1,5 +1,26 @@
-				<div class="mb-2">
-					<label for="app-owner-reject-remark" class="form-label small mb-1">Remark (required, max 150 chars)</label>
-					<textarea id="app-owner-reject-remark" class="form-control form-control-sm" rows="2" maxlength="150" placeholder="Write the reason for rejection..."></textarea>
-					<div class="form-text small"><span id="app-owner-reject-remark-count">0</span>/150</div>
-				</div>
+    const confirmRejectBtn = document.getElementById('app-owner-confirm-reject-btn');
+
+
+    const remarkInput = document.getElementById('app-owner-reject-remark');
+    const remarkCount = document.getElementById('app-owner-reject-remark-count');
+
+
+        function syncRejectEnable(){
+            const text=(remarkInput?.value||'').trim();
+            if(remarkCount) remarkCount.textContent=String(text.length);
+            if(confirmRejectBtn) confirmRejectBtn.disabled = !(ackBox?.checked && text.length>0 && text.length<=150);
+        }
+        if(ackBox){ ackBox.addEventListener('change', syncRejectEnable); }
+        if(remarkInput){ remarkInput.addEventListener('input', syncRejectEnable); }
+
+
+                body: JSON.stringify(Object.assign({ event_id: eventId, action: action }, action==='reject'?{ remark: (remarkInput?.value||'').trim() }:{}))
+
+
+                if(remarkInput){ remarkInput.value=''; }
+                if(remarkCount){ remarkCount.textContent='0'; }
+
+
+                const text=(remarkInput?.value||'').trim();
+                if(!text || text.length>150){ return; }
+ 
