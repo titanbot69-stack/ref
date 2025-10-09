@@ -1,69 +1,31 @@
-    remark = (data.get('remark') or '').strip() if data.get('action') == 'reject' else ''
+dashboard.css
 
 
-            # Persist remark if rejecting (DB has remark column in nido_identity_access.event_status)
-            if action == 'reject':
-                try:
-                    cursor.execute(
-                        """
-                        UPDATE event_status
-                        SET assigned_to = %s, assigned_at = %s, eve_status = %s, remark = %s
-                        WHERE event_id = %s
-                        """,
-                        [next_assigned_to, assigned_at, new_status, remark[:150], event_id]
-                    )
-                except Exception:
-                    # Fallback if remark column not present in a given env
-                    cursor.execute(
-                        """
-                        UPDATE event_status
-                        SET assigned_to = %s, assigned_at = %s, eve_status = %s
-                        WHERE event_id = %s
-                        """,
-                        [next_assigned_to, assigned_at, new_status, event_id]
-                    )
-            else:
-                cursor.execute(
-                    """
-                    UPDATE event_status
-                    SET assigned_to = %s, assigned_at = %s, eve_status = %s
-                    WHERE event_id = %s
-                    """,
-                    [next_assigned_to, assigned_at, new_status, event_id]
-                )
+/* Brand button styles used across RA/CTO/CISO/App Owner dashboards */
+.btn-brand {
+  background-color:#ff512f !important;
+  border-color:#ff512f !important;
+  color:#fff !important;
+}
+.btn-brand:hover, .btn-brand:focus {
+  background-color:#ff6b2e !important;
+  border-color:#ff6b2e !important;
+  color:#fff !important;
+}
+.btn-brand-outline {
+  background-color:transparent !important;
+  border:1px solid #ff512f !important;
+  color:#ff512f !important;
+}
+.btn-brand-outline:hover, .btn-brand-outline:focus {
+  background-color:#ff512f !important;
+  color:#fff !important;
+}
+.btn-pill { border-radius: 10px; }
 
 
+ra_dashboard.html
+					<td><button class="btn btn-sm btn-brand-outline btn-pill" data-bs-toggle="modal" data-bs-target="#revokeModal" data-emp="{{ h.emp_code }}" data-email="{{ h.business_email }}">Revoke</button></td>
 
 
-    remark = (data.get('remark') or '').strip() if action == 'reject' else ''
-
-            if action == 'reject':
-                try:
-                    cursor.execute(
-                        """
-                        UPDATE event_status
-                        SET assigned_to = %s, assigned_at = %s, eve_status = %s, remark = %s
-                        WHERE event_id = %s
-                        """,
-                        [assigned_to, assigned_at, eve_status, remark[:150], event_id]
-                    )
-                except Exception:
-                    cursor.execute(
-                        """
-                        UPDATE event_status
-                        SET assigned_to = %s, assigned_at = %s, eve_status = %s
-                        WHERE event_id = %s
-                        """,
-                        [assigned_to, assigned_at, eve_status, event_id]
-                    )
-            else:
-                cursor.execute(
-                    """
-                    UPDATE event_status
-                    SET assigned_to = %s, assigned_at = %s, eve_status = %s
-                    WHERE event_id = %s
-                    """,
-                    [assigned_to, assigned_at, eve_status, event_id]
-                )
-
-
+					<td><button class="btn btn-sm btn-brand-outline btn-recertify btn-pill" data-emp="{{ h.emp_code }}" data-email="{{ h.business_email }}">Recertify</button></td>
