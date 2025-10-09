@@ -1,47 +1,69 @@
-				<div class="mb-2">
-					<label for="ra-reject-remark" class="form-label small mb-1">Remark (required, max 150 chars)</label>
-					<textarea id="ra-reject-remark" class="form-control form-control-sm" rows="2" maxlength="150" placeholder="Write the reason for rejection..."></textarea>
-					<div class="form-text small"><span id="ra-reject-remark-count">0</span>/150</div>
-				</div>
+    remark = (data.get('remark') or '').strip() if data.get('action') == 'reject' else ''
+
+
+            # Persist remark if rejecting (DB has remark column in nido_identity_access.event_status)
+            if action == 'reject':
+                try:
+                    cursor.execute(
+                        """
+                        UPDATE event_status
+                        SET assigned_to = %s, assigned_at = %s, eve_status = %s, remark = %s
+                        WHERE event_id = %s
+                        """,
+                        [next_assigned_to, assigned_at, new_status, remark[:150], event_id]
+                    )
+                except Exception:
+                    # Fallback if remark column not present in a given env
+                    cursor.execute(
+                        """
+                        UPDATE event_status
+                        SET assigned_to = %s, assigned_at = %s, eve_status = %s
+                        WHERE event_id = %s
+                        """,
+                        [next_assigned_to, assigned_at, new_status, event_id]
+                    )
+            else:
+                cursor.execute(
+                    """
+                    UPDATE event_status
+                    SET assigned_to = %s, assigned_at = %s, eve_status = %s
+                    WHERE event_id = %s
+                    """,
+                    [next_assigned_to, assigned_at, new_status, event_id]
+                )
 
 
 
-	function executeAction(row,eventId,action,remark){
+
+    remark = (data.get('remark') or '').strip() if action == 'reject' else ''
+
+            if action == 'reject':
+                try:
+                    cursor.execute(
+                        """
+                        UPDATE event_status
+                        SET assigned_to = %s, assigned_at = %s, eve_status = %s, remark = %s
+                        WHERE event_id = %s
+                        """,
+                        [assigned_to, assigned_at, eve_status, remark[:150], event_id]
+                    )
+                except Exception:
+                    cursor.execute(
+                        """
+                        UPDATE event_status
+                        SET assigned_to = %s, assigned_at = %s, eve_status = %s
+                        WHERE event_id = %s
+                        """,
+                        [assigned_to, assigned_at, eve_status, event_id]
+                    )
+            else:
+                cursor.execute(
+                    """
+                    UPDATE event_status
+                    SET assigned_to = %s, assigned_at = %s, eve_status = %s
+                    WHERE event_id = %s
+                    """,
+                    [assigned_to, assigned_at, eve_status, event_id]
+                )
 
 
-
-			body: JSON.stringify(Object.assign({event_id: eventId, action}, action==='reject'?{remark:(remark||'').trim()}:{}))
-
-
-
-			const remarkInput=document.getElementById('ra-reject-remark');
-			const remarkCount=document.getElementById('ra-reject-remark-count');
-
-
-
-			if(remarkInput){ remarkInput.value=''; remarkCount && (remarkCount.textContent='0'); }
-
-
-
-
-
-	// Enable/disable confirm based on ack + remark
-	(function(){
-		const remarkInput=document.getElementById('ra-reject-remark');
-		const remarkCount=document.getElementById('ra-reject-remark-count');
-		function sync(){
-			const text=(remarkInput?.value||'').trim();
-			if(remarkCount) remarkCount.textContent=String(text.length);
-			confirmBtn && (confirmBtn.disabled=!(ackBox.checked && text.length>0 && text.length<=150));
-		}
-		ackBox && ackBox.addEventListener('change',sync);
-		remarkInput && remarkInput.addEventListener('input',sync);
-	})();
-
-
-
-		const remark=(document.getElementById('ra-reject-remark')?.value||'').trim();
-		if(!remark||remark.length>150) return;
-
-
-		executeAction(row,eventId,'reject',remark);
