@@ -1,63 +1,47 @@
-        # Notify original RA (triggered_by) about progress
-        try:
-            # Determine RA name (best-effort)
-            hrms_rows_notify = get_hrms_list()
-            trig_row_full = next((r for r in hrms_rows_notify if (r.get('business_email') or '').lower() == (original_triggered_by or '').lower()), None)
-            ra_name = (trig_row_full or {}).get('first_name') or (original_triggered_by or 'Requester')
-            # Determine request type & target user from description
-            request_type = 'Grant' if is_grant else 'Revoke'
-            # Extract target user email (after 'for ' and before ' on') simplistic parse
-            target_user = ''
-            if ' for ' in (event_description or '') and ' on ' in (event_description or ''):
-                try:
-                    segment = event_description.split(' for ',1)[1]
-                    target_user = segment.split(' on ',1)[0].strip()
-                except Exception:
-                    target_user = ''
-            stage_label = current_assigned_to.replace('_',' ').title()
-            action_display = 'Rejected' if action == 'reject' else 'Accepted'
-            status_now = new_status
-            # Next stage label (for informative email)
-            next_stage = 'None (Request Closed)' if final else next_assigned_to.replace('_',' ').title()
-            # Derive application name from description (between ' on ' and ' application')
-            application_name = ''
-            if ' on ' in (event_description or '') and ' application' in (event_description or ''):
-                try:
-                    application_name = event_description.split(' on ',1)[1].split(' application',1)[0]
-                except Exception:
-                    application_name = ''
-            html = render(request, 'emails/request_progress_update.html', {
-                'ra_name': ra_name,
-                'request_type': request_type,
-                'target_user': target_user,
-                'application_name': application_name,
-                'stage_label': stage_label,
-                'actor': request.user.email,
-                'action_display': action_display,
-                'status_now': status_now,
-                'final': final,
-                'next_stage': next_stage,
-                'event_description': event_description,
-            }).content.decode('utf-8')
-            # _send_email('Access Request Update', [original_triggered_by], html)
-            print(f"[Email Simulated] Progress update sent to {original_triggered_by} for {event_id}")
-        except Exception as notify_err:
-            logger.warning(f"Failed to send progress update email for {event_id}: {notify_err}")
+				<div class="mb-2">
+					<label for="admin-reject-remark" class="form-label small mb-1">Remark (required, max 150 chars)</label>
+					<textarea id="admin-reject-remark" class="form-control form-control-sm" rows="2" maxlength="150" placeholder="Write the reason for rejection..."></textarea>
+					<div class="form-text small"><span id="admin-reject-remark-count">0</span>/150</div>
+				</div>
 
 
 
-<h3>Access Request Update</h3>
-<p>Hi {{ ra_name }},</p>
-<p>Your {{ request_type }} for <strong>{{ target_user }}</strong> (Application: {{ application_name }}) has advanced a step.</p>
-<p><strong>Stage:</strong> {{ stage_label }}<br/>
-<strong>Action Taken By:</strong> {{ actor }}<br/>
-<strong>Action:</strong> {{ action_display }}<br/>
-<strong>Status Now:</strong> {{ status_now }}
-</p>
-{% if final %}
-<p>This request is now <strong>{{ status_now }}</strong>. No further action is required.</p>
-{% else %}
-<p>The request is moving to the next stage: <strong>{{ next_stage }}</strong>. You'll receive another update when it changes again.</p>
-{% endif %}
-<p>Description (for reference):<br/>{{ event_description }}</p>
-<p>Regards,<br/>IAM Workflow Engine</p>
+	function execute(row,eventId,action,remark){
+		const payload={event_id:eventId,action};
+		if(action==='reject'){ payload.remark=(remark||'').trim(); }
+		fetch('/action/update-event-status/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify(payload)}).then(r=>r.json()).then(d=>{if(d.success){row.style.transition='opacity .5s';row.style.opacity=0;setTimeout(()=>row.remove(),500);}else{alert('Failed: '+(d.error||'Unknown'));}}).catch(()=>alert('Network error'));
+	}
+
+
+
+				const remarkInput=document.getElementById('admin-reject-remark');
+				const remarkCount=document.getElementById('admin-reject-remark-count');
+				rejectIdSpan.textContent=eventId; ackBox.checked=false; confirmBtn.disabled=true; 
+				if(remarkInput){ remarkInput.value=''; remarkCount && (remarkCount.textContent='0'); }
+				bsModal && bsModal.show(); return;
+
+
+
+
+	// Enable/disable confirm based on ack + remark
+	(function(){
+		const remarkInput=document.getElementById('admin-reject-remark');
+		const remarkCount=document.getElementById('admin-reject-remark-count');
+		function sync(){
+			const text=(remarkInput?.value||'').trim();
+			if(remarkCount) remarkCount.textContent=String(text.length);
+			confirmBtn && (confirmBtn.disabled=!(ackBox.checked && text.length>0 && text.length<=150));
+		}
+		ackBox && ackBox.addEventListener('change',sync);
+		remarkInput && remarkInput.addEventListener('input',sync);
+	})();
+
+
+
+
+
+		if(!pendingReject)return; const {row,eventId}=pendingReject; const remark=(document.getElementById('admin-reject-remark')?.value||'').trim(); if(!remark||remark.length>150) return; bsModal && bsModal.hide(); execute(row,eventId,'reject',remark); pendingReject=null;});
+
+
+
+        
