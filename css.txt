@@ -1,47 +1,5 @@
 				<div class="mb-2">
-					<label for="admin-reject-remark" class="form-label small mb-1">Remark (required, max 150 chars)</label>
-					<textarea id="admin-reject-remark" class="form-control form-control-sm" rows="2" maxlength="150" placeholder="Write the reason for rejection..."></textarea>
-					<div class="form-text small"><span id="admin-reject-remark-count">0</span>/150</div>
+					<label for="app-owner-reject-remark" class="form-label small mb-1">Remark (required, max 150 chars)</label>
+					<textarea id="app-owner-reject-remark" class="form-control form-control-sm" rows="2" maxlength="150" placeholder="Write the reason for rejection..."></textarea>
+					<div class="form-text small"><span id="app-owner-reject-remark-count">0</span>/150</div>
 				</div>
-
-
-
-	function execute(row,eventId,action,remark){
-		const payload={event_id:eventId,action};
-		if(action==='reject'){ payload.remark=(remark||'').trim(); }
-		fetch('/action/update-event-status/',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},body:JSON.stringify(payload)}).then(r=>r.json()).then(d=>{if(d.success){row.style.transition='opacity .5s';row.style.opacity=0;setTimeout(()=>row.remove(),500);}else{alert('Failed: '+(d.error||'Unknown'));}}).catch(()=>alert('Network error'));
-	}
-
-
-
-				const remarkInput=document.getElementById('admin-reject-remark');
-				const remarkCount=document.getElementById('admin-reject-remark-count');
-				rejectIdSpan.textContent=eventId; ackBox.checked=false; confirmBtn.disabled=true; 
-				if(remarkInput){ remarkInput.value=''; remarkCount && (remarkCount.textContent='0'); }
-				bsModal && bsModal.show(); return;
-
-
-
-
-	// Enable/disable confirm based on ack + remark
-	(function(){
-		const remarkInput=document.getElementById('admin-reject-remark');
-		const remarkCount=document.getElementById('admin-reject-remark-count');
-		function sync(){
-			const text=(remarkInput?.value||'').trim();
-			if(remarkCount) remarkCount.textContent=String(text.length);
-			confirmBtn && (confirmBtn.disabled=!(ackBox.checked && text.length>0 && text.length<=150));
-		}
-		ackBox && ackBox.addEventListener('change',sync);
-		remarkInput && remarkInput.addEventListener('input',sync);
-	})();
-
-
-
-
-
-		if(!pendingReject)return; const {row,eventId}=pendingReject; const remark=(document.getElementById('admin-reject-remark')?.value||'').trim(); if(!remark||remark.length>150) return; bsModal && bsModal.hide(); execute(row,eventId,'reject',remark); pendingReject=null;});
-
-
-
-        
