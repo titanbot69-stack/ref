@@ -1,13 +1,43 @@
-# Time helpers: consistent IST usage
-IST_ZONE = ZoneInfo('Asia/Kolkata')
+from django.utils.deprecation import MiddlewareMixin
 
-def now_ist():
-    """Return current time as naive IST (Asia/Kolkata)."""
-    return datetime.now(IST_ZONE).replace(tzinfo=None)
 
-def to_ist(dt):
-    if dt is None:
-        return None
-    if getattr(dt, 'tzinfo', None) is None:
-        return dt
-    return dt.astimezone(IST_ZONE).replace(tzinfo=None)
+class NoCacheMiddleware(MiddlewareMixin):
+    """Disable caching so back button won't expose protected pages from cache."""
+    def process_response(self, request, response):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+
+
+    """Login page: if already authenticated and user reaches here, force a fresh login.
+    This prevents re-entering the app via back navigation; the user must login again.
+    """
+    if request.user.is_authenticated:
+        try:
+            auth_logout(request)
+        except Exception:
+            pass
+
+
+'core.middleware.NoCacheMiddleware',
+
+
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+
+class RootRedirectView(RedirectView):
+    permanent = False
+    def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return HttpResponseRedirect('/dashboard/')
+        return HttpResponseRedirect('/login/')
+
+
+    path('', RootRedirectView.as_view(), name='root-redirect'),
+
+
+
+    path('', RootRedirectView.as_view(), name='root-redirect'),
