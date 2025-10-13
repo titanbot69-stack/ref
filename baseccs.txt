@@ -1,21 +1,13 @@
-html, body {
-  height: 100%;
-}
-.wrapper {
-  background: linear-gradient(45deg,#ff512f,#f09819); /* theme */
-  min-height: 100vh;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-.container {
-  height: 100vh;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-}
-.mh-50vh {
-  max-height: 65vh;
-  overflow: auto;
-}
+# Time helpers: consistent IST usage
+IST_ZONE = ZoneInfo('Asia/Kolkata')
+
+def now_ist():
+    """Return current time as naive IST (Asia/Kolkata)."""
+    return datetime.now(IST_ZONE).replace(tzinfo=None)
+
+def to_ist(dt):
+    if dt is None:
+        return None
+    if getattr(dt, 'tzinfo', None) is None:
+        return dt
+    return dt.astimezone(IST_ZONE).replace(tzinfo=None)
