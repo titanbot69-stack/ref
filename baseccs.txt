@@ -1,43 +1,7 @@
-from django.utils.deprecation import MiddlewareMixin
-
-
-class NoCacheMiddleware(MiddlewareMixin):
-    """Disable caching so back button won't expose protected pages from cache."""
-    def process_response(self, request, response):
-        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-        response.headers['Pragma'] = 'no-cache'
-        response.headers['Expires'] = '0'
-        return response
-
-
-    """Login page: if already authenticated and user reaches here, force a fresh login.
-    This prevents re-entering the app via back navigation; the user must login again.
-    """
-    if request.user.is_authenticated:
-        try:
-            auth_logout(request)
-        except Exception:
-            pass
-
-
-'core.middleware.NoCacheMiddleware',
-
-
-from django.http import HttpResponseRedirect
-from django.urls import reverse
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
-
-class RootRedirectView(RedirectView):
-    permanent = False
-    def get(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            return HttpResponseRedirect('/dashboard/')
-        return HttpResponseRedirect('/login/')
-
-
-    path('', RootRedirectView.as_view(), name='root-redirect'),
-
-
-
-    path('', RootRedirectView.as_view(), name='root-redirect'),
+<td class="desc-cell">
+							<div class="desc-wrapper" data-state="collapsed">
+								<div class="desc-short" title="{{ ev.remark }}">{{ ev.remark }}</div>
+								<div class="desc-full">{{ ev.remark }}</div>
+								<a href="#" class="desc-toggle small" aria-expanded="false">Read More</a>
+							</div>
+						</td>
