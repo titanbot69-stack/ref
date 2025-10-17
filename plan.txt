@@ -1,0 +1,207 @@
+Nice — good, realistic additions. I’ve folded your requirements into the app spec and expanded the data model, UI flows, background logic and notifications so the system can (1) preempt a currently-worked ticket for a higher-priority one, (2) ask the assignee about impact, (3) capture the exact times/decisions, (4) auto-estimate delays, and (5) surface sequencing controls when multiple tickets are assigned. Below is a concise, actionable design you can implement immediately (or I can turn into models/controllers/views next).
+
+# Summary of new behaviour you asked for
+
+* If someone is *actively working* on Issue A and a higher-priority Issue B arrives, the system should:
+
+  * Prompt the assignee before preempting: record whether they accept switching and what the expected impact (delay) to Issue A will be.
+  * If they accept switching, mark Issue A as **preempted** and create a WorkSession / Preemption record with timestamps and estimated delay; start tracking time on Issue B.
+  * Notify stakeholders (reporter, assignee, app owner, upcoming escalation RAs) by email/Teams.
+  * Show on dashboards that Issue A is delayed and by how long (estimated and actual once resumed).
+* When assigning multiple tickets to one person, the assignor can set an ordered workflow (execution sequence) and later change it. The assignee sees an ordered queue and can reorder (if allowed).
+* Before SLA escalation, the system must send a warning to the assignee (configurable time before breach) and log that warning was sent.
+* All decisions (accept switching, decline, estimated impact) and activity timestamps are fully audited.
+
+---
+
+# Key data model additions (Django-style fields / models)
+
+(Only showing added models/fields — integrate with your earlier models.)
+
+### WorkSession (capture when a user actually works on an issue)
+
+* `id`, `issue (FK Issue)`, `user (FK)`, `started_at (datetime)`, `paused_at (datetime, nullable)`, `resumed_at (datetime, nullable)`, `stopped_at (datetime, nullable)`, `duration_seconds` (computed or stored), `is_active (bool)`
+
+Purpose: capture exact time windows the assignee was actively working. Create a new WorkSession when status changes to **In Progress** and close it when moved away (Paused/Preempted/Resolved).
+
+### PreemptionLog
+
+* `id`, `preempted_issue (FK Issue)` (old task), `preempting_issue (FK Issue)` (new higher priority), `preempted_by (FK user)` (who requested/assigned), `assignee (FK user)`, `decision` (ACCEPTED / DECLINED / AUTO), `decline_reason (text, nullable)`, `estimated_delay_hours` (float), `estimated_new_due_date` (datetime), `actual_resume_at` (datetime, nullable), `created_at`
+
+Purpose: record the decision and estimate, used for dashboards and audit.
+
+### IssueAssignmentSequence (for ordered assignment)
+
+* `id`, `assignee (FK user)`, `issue (FK)`, `sequence_order (int)`, `created_by`, `created_at`, `updated_at`
+
+Purpose: allow assignor to set “do this then that” ordering per assignee. Could be attached to team queues or a single user.
+
+### Issue (new fields)
+
+* `is_preempted (bool, default=False)`
+* `preempted_by_issue (FK Issue, nullable)` — pointer to current preempting issue
+* `estimated_time_to_complete_hours` (float) — initial estimate in hours (editable)
+* `remaining_estimate_hours` (float) — updated when work logged or paused
+* `execution_order` (int or null) — optional quick-order field when bulk assigning
+* `next_in_sequence (FK Issue nullable)` — optional link in a chain
+
+### SLAWarningLog
+
+* `id`, `issue (FK)`, `warning_sent_to (FK user)`, `warning_sent_at`, `time_before_breach_seconds`, `channel`
+
+---
+
+# UI / UX flows (key screens & modals)
+
+## 1) Assigning / Preempting modal (trigger: a higher-priority ticket assignment or admin reassign)
+
+When someone tries to assign or start work on Issue B while the assignee has Issue A in **In Progress**:
+
+* Show modal:
+
+  * "You are currently working on Issue A (ID #123). Issue B (P1) requires immediate attention. If you start Issue B now, will this delay Issue A?"
+  * Fields:
+
+    * Radio: **Accept switching** / **Decline switching**
+    * If Accept: `Estimated delay for Issue A (hours)` (prefilled with system auto-estimate; editable)
+    * `Comment` (optional)
+    * Checkbox: `Mark Issue A as preempted` (auto-checked)
+    * Button: `Start Issue B` (records decision) or `Cancel`
+  * If Decline: capture `reason` (short text); assignor gets notified and can override if allowed by role.
+
+## 2) Assignee queue / ordered workflow UI
+
+* When multiple tickets are assigned, the assignor can set order while assigning:
+
+  * Drag-and-drop list or `sequence_order` numeric fields.
+  * An assignor can optionally lock sequence or allow assignee to reorder.
+* Each ticket shows position in queue and estimated start time computed from remaining estimates.
+
+## 3) Ticket detail and timeline
+
+* Show preemption banner: "This ticket was preempted by #456 at 2025-10-17 11:03 by change X. Estimated delay: 4 hours (entered by user Y)."
+* Timeline includes PreemptionLog entries and WorkSession events (start/pause/resume/stop).
+
+## 4) SLA warning / escalation notice
+
+* Countdown & progress bar.
+* When configured warning threshold reached (e.g., 30 min before breach), show alert to assignee in-app + email/Teams. The email must be recorded in SLAWarningLog.
+
+---
+
+# Background logic / task scheduling (Celery-style pseudocode)
+
+## WorkSession lifecycle (server-side)
+
+* On ticket status change to `IN_PROGRESS`:
+
+  * If no active WorkSession for (issue,user) → create WorkSession(started_at=now, is_active=True)
+  * If there’s an active WorkSession for another issue by same user → optionally auto-pause that WorkSession and create PreemptionLog if switching due to priority (unless previously decided)
+* On status change away from `IN_PROGRESS` (Paused/Resolved/AssignedElsewhere):
+
+  * Close active WorkSession (stopped_at=now), compute duration, update issue.remaining_estimate_hours = max(0, previous_remaining - worked_hours)
+
+## Preemption handling (when assigning/starting higher priority ticket)
+
+* When assignor assigns/starts Issue B and assignee has Issue A active:
+
+  * If assignor has override rights: create PreemptionLog with decision=‘AUTO’ and estimated_delay computed from `remaining_estimate_hours` of Issue A.
+  * Otherwise present modal to assignee (see UI flow). Once assignee responds, record PreemptionLog (ACCEPTED/DECLINED), set Issue A.is_preempted True and Issue A.preempted_by_issue = Issue B.id if accepted.
+
+## SLA warning & escalation task (periodic)
+
+* Run every N minutes:
+
+  * For each issue with status in monitored set (Open/Assigned/In Progress):
+
+    * Compute `time_to_breach = sla_deadline - now`.
+    * If `time_to_breach <= warning_threshold` and `warning_not_sent_for_this_stage`:
+
+      * Send warning to assignee(s) and log SLAWarningLog.
+    * If `now >= sla_deadline` and not yet escalated to the next level:
+
+      * Enact escalation (escalation actor from SLA policy), send notifications, create EscalationLog.
+
+## Auto-estimate formula for delay (suggested)
+
+* If switching from Issue A to Issue B:
+
+  * Use `estimated_delay_hours = remaining_estimate_hours_of_A * (1 + multitask_overhead_factor)`
+  * `multitask_overhead_factor` default 0.1 (10%) to account for context switch.
+  * E.g., if remaining = 3 hrs → estimate = 3.3 hrs.
+* Allow assignee to override with a manual estimate.
+
+---
+
+# API endpoints needed (high-level)
+
+* `POST /api/issues/{id}/start-work/` — create WorkSession (body: start_time optional, source=UI/API)
+* `POST /api/issues/{id}/pause-work/` — pause/stop
+* `POST /api/issues/{id}/preemption/` — record preemption decision (body: preempting_issue_id, decision, estimated_delay_hours, comment)
+* `POST /api/assignments/bulk/` — assign multiple tickets with optional `sequence_order` parameter
+* `GET /api/users/{id}/queue/` — returns ordered queue and estimated start times
+* `GET /api/issues/{id}/timeline/` — includes WorkSessions, PreemptionLog, EscalationLog
+
+---
+
+# Notifications (what/when/to whom)
+
+* **Before escalation (configurable window)**: warning to assignee + assignor + app owner (email/Teams) — record in SLAWarningLog.
+* **On preemption request**:
+
+  * If assigned by someone else: ask assignee; send notification to assignor with decision.
+  * On acceptance: notify reporter of preempted ticket about expected delay and show on dashboard.
+* **On decline**: notify assignor so assignor can override or find alternative resolver.
+* **When actual delay differs from estimate**: when the preempted ticket resumes or is closed, compute actual delay and send final notification to stakeholders.
+
+---
+
+# Audit & reporting
+
+* Dashboards: show number of preemptions, average estimated vs actual delay, top preempting apps, top preempted assignees.
+* SLA breach reports: include whether preemptions contributed to breach (correlate PreemptionLog + SLA breach timestamp).
+* Provide CSV export of PreemptionLog and WorkSessions for audits.
+
+---
+
+# Acceptance criteria (for this enhancement)
+
+1. When a higher-priority ticket is assigned/started, the assignee receives a modal asking to accept/decline switching, with an editable estimated delay field.
+2. If accepted, Issue A is marked preempted, PreemptionLog created, WorkSession for A closed, WorkSession for B started.
+3. The assignor can set an ordered sequence of tasks for any assignee and modify it later.
+4. SLA warnings are sent before breach and logged; escalation only happens after warning (unless override).
+5. All events (start/pause/resume/preempt/decision/notifications) are captured and visible in the issue timeline.
+6. Dashboard shows preemption impacts and allows filtering by app/assignee/date.
+
+---
+
+# Implementation complexity & suggested priorities
+
+* **Low to medium effort**: WorkSession model + automatic creation on status change + basic preemption logging (manual accept/decline modal).
+* **Medium**: Auto-estimate algorithm and queue ordering UI for assignors + API endpoints.
+* **Medium to high**: Robust SLA correlation to preemptions and reporting (to show root-cause of breach), plus on-call rotation/rescheduling logic complexity.
+* **High**: Automatic override/forced preemption flows and business rules for who can override.
+
+---
+
+# Example: sequence of events (concrete)
+
+1. Alice is working on Issue A (In Progress, remaining_estimate_hours=4).
+2. Bob (assignor) assigns Issue B (Priority P1) to Alice.
+3. System detects Alice has active WorkSession on A and pops the preempt modal.
+4. Alice accepts and sets `estimated_delay=5` hours (system suggested 4.4).
+5. System creates PreemptionLog, marks Issue A.is_preempted=True (preempted_by_issue=B), closes WorkSession(A) and starts WorkSession(B).
+6. System calculates new estimated due dates, updates dashboards, sends notification to Issue A reporter and App Owner that A is delayed by ~5 hours.
+7. 30 minutes before Issue B SLA breach, system sends warning email to Alice and logs SLAWarningLog.
+8. When Alice resumes Issue A later, actual resume timestamp is logged and actual delay computed and stored in PreemptionLog.
+
+---
+
+# Next step options (pick one and I’ll generate immediately)
+
+* I can generate the **Django models + serializers + migration SQL** for these new tables/fields.
+* Or I can write the **Celery task pseudocode** / actual sample Celery tasks to handle preemption, SLA warnings & escalation.
+* Or I can create the **UI mockups and modal JSON** for the preempt flow and queue ordering.
+* Or I can produce the **API endpoint implementations** (Django REST Framework views & permissions).
+
+Tell me which one you want and I’ll produce it right now — e.g., “Give me Django models + serializers” or “Show me Celery task code for SLA warnings & preemption”.
